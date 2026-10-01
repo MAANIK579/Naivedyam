@@ -1,8 +1,7 @@
-// src/screens/CartScreen.js — Enhanced with payment screen navigation and theme support
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet,
-  TouchableOpacity, Alert, ScrollView, TextInput,
+  TouchableOpacity, Alert, ScrollView, TextInput, Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useCart } from '../context/CartContext';
@@ -76,7 +75,15 @@ export default function CartScreen({ navigation }) {
         </View>
         {cartItems.map(({ item, qty }) => (
           <View key={item.id || item._id} style={styles.cartItem}>
-            <Text style={{ fontSize: 32, width: 44, textAlign: 'center' }}>{item.emoji}</Text>
+            {item.image_url ? (
+              <Image
+                source={{ uri: item.image_url }}
+                style={styles.cartItemThumb}
+                resizeMode="cover"
+              />
+            ) : (
+              <Text style={{ fontSize: 32, width: 44, textAlign: 'center' }}>{item.emoji}</Text>
+            )}
             <View style={{ flex: 1 }}>
               <Text style={styles.itemName}>{item.name}</Text>
               <Text style={styles.itemPrice}>₹{item.price * qty}</Text>
@@ -254,6 +261,9 @@ const createStyles = (colors, isDark) => StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: 12,
     backgroundColor: colors.cardBg, borderWidth: 1, borderColor: colors.borderLight,
     borderRadius: RADIUS.lg, padding: 12, marginBottom: 10, ...SHADOW.small,
+  },
+  cartItemThumb: {
+    width: 44, height: 44, borderRadius: RADIUS.md, backgroundColor: colors.creamDark,
   },
   itemName:  { fontSize: 14, ...FONTS.semibold, color: colors.text },
   itemPrice: { fontSize: 15, ...FONTS.bold, color: colors.saffronDeep, marginTop: 2 },

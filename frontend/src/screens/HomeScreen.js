@@ -1,8 +1,7 @@
-// src/screens/HomeScreen.js — Swiggy-like enhanced UI with theme support
 import React, { useEffect, useState } from 'react';
 import {
   View, Text, ScrollView, StyleSheet,
-  TouchableOpacity, StatusBar, RefreshControl, Animated,
+  TouchableOpacity, StatusBar, RefreshControl, Animated, Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
@@ -44,6 +43,7 @@ export default function HomeScreen({ navigation }) {
           id: item._id || item.id,
           name: item.name,
           emoji: item.emoji,
+          image_url: item.image_url,
           price: item.price,
           tag: item.tags?.[0] || 'Popular',
         })));
@@ -51,6 +51,10 @@ export default function HomeScreen({ navigation }) {
     } catch (err) {}
     setRefreshing(false);
   }
+
+  useEffect(() => {
+    onRefresh();
+  }, []);
 
   useEffect(() => {
     const pulse = Animated.loop(
@@ -176,7 +180,17 @@ export default function HomeScreen({ navigation }) {
                 <View style={styles.popularTag}>
                   <Text style={styles.popularTagText}>{item.tag}</Text>
                 </View>
-                <Text style={styles.popularEmoji}>{item.emoji}</Text>
+                <View style={styles.popularMedia}>
+                  {item.image_url ? (
+                    <Image
+                      source={{ uri: item.image_url }}
+                      style={styles.popularImage}
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <Text style={styles.popularEmoji}>{item.emoji}</Text>
+                  )}
+                </View>
                 <Text style={styles.popularName} numberOfLines={1}>{item.name}</Text>
                 <Text style={styles.popularPrice}>₹{item.price}</Text>
               </TouchableOpacity>
@@ -282,7 +296,14 @@ const createStyles = (colors, isDark) => StyleSheet.create({
     borderRadius: RADIUS.sm,
   },
   popularTagText: { fontSize: 9, ...FONTS.bold, color: colors.white, textTransform: 'uppercase' },
-  popularEmoji: { fontSize: 36, marginTop: 16, marginBottom: 8 },
+  popularMedia: {
+    width: 72, height: 72, borderRadius: RADIUS.md, overflow: 'hidden',
+    alignItems: 'center', justifyContent: 'center',
+    marginTop: 14, marginBottom: 8,
+    backgroundColor: isDark ? colors.border : '#F3F4F6',
+  },
+  popularImage: { width: '100%', height: '100%' },
+  popularEmoji: { fontSize: 36 },
   popularName: { fontSize: 13, ...FONTS.semibold, color: colors.text, textAlign: 'center' },
   popularPrice: { fontSize: 15, ...FONTS.bold, color: colors.saffronDeep, marginTop: 4 },
   quickActions: {

@@ -1,8 +1,7 @@
-// src/components/ItemDetailModal.js — Swiggy-like item detail bottom sheet with theme support
 import React, { useEffect, useState } from 'react';
 import {
   View, Text, StyleSheet, Modal, TouchableOpacity,
-  ScrollView, Animated, Dimensions, ActivityIndicator,
+  ScrollView, Animated, Dimensions, ActivityIndicator, Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
@@ -94,11 +93,21 @@ export default function ItemDetailModal({ visible, onClose, item, navigation }) 
           <View style={styles.handleBar} />
 
           <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
-            <View style={styles.header}>
-              <View style={styles.emojiContainer}>
-                <Text style={styles.emoji}>{item.emoji}</Text>
-              </View>
-              <View style={styles.badges}>
+            <View style={[styles.header, !!item.image_url && styles.headerWithImage]}>
+              {item.image_url ? (
+                <View style={styles.heroImageContainer}>
+                  <Image
+                    source={{ uri: item.image_url }}
+                    style={styles.heroImage}
+                    resizeMode="cover"
+                  />
+                </View>
+              ) : (
+                <View style={styles.emojiContainer}>
+                  <Text style={styles.emoji}>{item.emoji}</Text>
+                </View>
+              )}
+              <View style={[styles.badges, !!item.image_url && styles.badgesOnImage]}>
                 <VegBadge isVeg={item.is_veg} />
                 <HeartButton itemId={itemId} size={24} />
               </View>
@@ -263,6 +272,21 @@ const createStyles = (colors, isDark) => StyleSheet.create({
     paddingTop: 16,
     paddingBottom: 8,
     backgroundColor: colors.creamDark,
+  },
+  headerWithImage: {
+    paddingTop: 0,
+    paddingBottom: 0,
+    position: 'relative',
+  },
+  heroImageContainer: {
+    width: '100%',
+    height: 220,
+    backgroundColor: colors.creamDark,
+    overflow: 'hidden',
+  },
+  heroImage: {
+    width: '100%',
+    height: '100%',
   },
   emojiContainer: {
     width: 120,

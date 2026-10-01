@@ -1,8 +1,7 @@
-// src/screens/MenuScreen.js — Enhanced with item detail modal and theme support
 import React, { useEffect, useState, useCallback } from 'react';
 import {
   View, Text, FlatList, ScrollView, StyleSheet,
-  TouchableOpacity, ActivityIndicator, Alert, RefreshControl,
+  TouchableOpacity, ActivityIndicator, Alert, RefreshControl, Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../api/client';
@@ -81,7 +80,15 @@ export default function MenuScreen({ route, navigation }) {
         }}
       >
         <View style={styles.cardEmoji}>
-          <Text style={{ fontSize: 48 }}>{item.emoji}</Text>
+          {item.image_url ? (
+            <Image
+              source={{ uri: item.image_url }}
+              style={styles.cardImage}
+              resizeMode="cover"
+            />
+          ) : (
+            <Text style={{ fontSize: 48 }}>{item.emoji}</Text>
+          )}
           <View style={styles.vegOverlay}>
             <VegBadge isVeg={item.is_veg === true || item.is_veg === 1} />
           </View>
@@ -267,9 +274,11 @@ const createStyles = (colors, isDark) => StyleSheet.create({
     overflow: 'hidden', ...SHADOW.small,
   },
   cardEmoji: {
-    height: 120, backgroundColor: colors.creamDark,
+    height: 140, backgroundColor: colors.creamDark,
     alignItems: 'center', justifyContent: 'center',
+    overflow: 'hidden',
   },
+  cardImage: { width: '100%', height: '100%' },
   vegOverlay: { position: 'absolute', top: 10, left: 10 },
   heartOverlay: { position: 'absolute', top: 8, right: 8 },
   cardBody:   { padding: 14 },

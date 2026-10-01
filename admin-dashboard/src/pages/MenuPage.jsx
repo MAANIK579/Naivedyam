@@ -42,7 +42,7 @@ function VegBadge({ isVeg }) {
 /* -------- Initial form states -------- */
 const BLANK_ITEM = {
   name: '', description: '', price: '', category: '', emoji: '🍽️',
-  is_veg: true, cuisine_type: '', prep_time: '', is_available: true,
+  image_url: '', is_veg: true, cuisine_type: '', prep_time: '', is_available: true,
 };
 
 const BLANK_CAT = { name: '', emoji: '🍽️', sort_order: 0, is_active: true };
@@ -128,6 +128,7 @@ export default function MenuPage() {
       price:        item.price         ?? '',
       category:     item.category?._id ?? item.category ?? '',
       emoji:        item.emoji         ?? '🍽️',
+      image_url:    item.image_url     ?? '',
       is_veg:       item.is_veg        ?? true,
       cuisine_type: item.cuisine_type  ?? '',
       prep_time:    item.prep_time     ?? '',
@@ -360,7 +361,18 @@ export default function MenuPage() {
                       const catName = item.category?.name ?? categories.find((c) => (c._id ?? c.id) === item.category)?.name ?? '—';
                       return (
                         <tr key={id} style={{ opacity: item.is_available ? 1 : 0.6 }}>
-                          <td style={{ fontSize: '1.3rem', paddingRight: 0 }}>{item.emoji ?? '🍽️'}</td>
+                          <td style={{ paddingRight: 4, width: 48 }}>
+                            {item.image_url ? (
+                              <img
+                                src={item.image_url}
+                                alt={item.name}
+                                onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                                style={{ width: 38, height: 38, borderRadius: 8, objectFit: 'cover', border: '1px solid var(--border)' }}
+                              />
+                            ) : (
+                              <span style={{ fontSize: '1.3rem' }}>{item.emoji ?? '🍽️'}</span>
+                            )}
+                          </td>
                           <td>
                             <div style={{ fontWeight: 600 }}>{item.name}</div>
                             {item.description && (
@@ -556,6 +568,26 @@ export default function MenuPage() {
           <div className="form-group" style={{ marginBottom: 14 }}>
             <label className="form-label">Description</label>
             <textarea rows={2} value={itemForm.description} onChange={(e) => setItemForm((f) => ({ ...f, description: e.target.value }))} placeholder="Short description…" style={{ resize: 'vertical' }} />
+          </div>
+          <div className="form-group" style={{ marginBottom: 14 }}>
+            <label className="form-label">Dish Image URL</label>
+            <input
+              type="url"
+              value={itemForm.image_url}
+              onChange={(e) => setItemForm((f) => ({ ...f, image_url: e.target.value }))}
+              placeholder="https://images.unsplash.com/... (optional)"
+            />
+            {itemForm.image_url ? (
+              <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 12, padding: '8px 12px', background: 'var(--cream)', borderRadius: 8, border: '1px solid var(--border)' }}>
+                <img
+                  src={itemForm.image_url}
+                  alt="Preview"
+                  onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                  style={{ width: 56, height: 56, borderRadius: 8, objectFit: 'cover', border: '1px solid var(--border)' }}
+                />
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Image Preview</span>
+              </div>
+            ) : null}
           </div>
           <div className="form-row" style={{ marginBottom: 14 }}>
             <div className="form-group">
