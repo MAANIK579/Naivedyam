@@ -3,12 +3,13 @@ import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAdminAuth } from '../context/AuthContext';
 import {
   DashboardIcon, OrdersIcon, MenuIcon, CouponIcon,
-  UsersIcon, AnalyticsIcon, LogoutIcon, FlameIcon,
+  UsersIcon, AnalyticsIcon, LogoutIcon, FlameIcon, BikeIcon,
 } from './Icons';
 
 const NAV_ITEMS = [
   { to: '/',          Icon: DashboardIcon, label: 'Dashboard'  },
   { to: '/orders',    Icon: OrdersIcon,    label: 'Orders'     },
+  { to: '/deliveries',Icon: BikeIcon,      label: 'Deliveries' },
   { to: '/menu',      Icon: MenuIcon,      label: 'Menu'       },
   { to: '/coupons',   Icon: CouponIcon,    label: 'Coupons'    },
   { to: '/users',     Icon: UsersIcon,     label: 'Users'      },
@@ -16,12 +17,13 @@ const NAV_ITEMS = [
 ];
 
 const PAGE_TITLES = {
-  '/':          'Dashboard',
-  '/orders':    'Orders',
-  '/menu':      'Menu Management',
-  '/coupons':   'Coupons',
-  '/users':     'Users',
-  '/analytics': 'Analytics',
+  '/':           'Dashboard',
+  '/orders':     'Orders',
+  '/deliveries': 'Delivery Fulfillment',
+  '/menu':       'Menu Management',
+  '/coupons':    'Coupons',
+  '/users':      'Users',
+  '/analytics':  'Analytics',
 };
 
 export default function Layout({ children }) {

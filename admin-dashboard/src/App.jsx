@@ -8,6 +8,7 @@ import Layout         from './components/Layout';
 import LoginPage      from './pages/LoginPage';
 import DashboardPage  from './pages/DashboardPage';
 import OrdersPage     from './pages/OrdersPage';
+import DeliveriesPage from './pages/DeliveriesPage';
 import MenuPage       from './pages/MenuPage';
 import CouponsPage    from './pages/CouponsPage';
 import UsersPage      from './pages/UsersPage';
@@ -62,6 +63,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <OrdersPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/deliveries"
+        element={
+          <ProtectedRoute>
+            <DeliveriesPage />
           </ProtectedRoute>
         }
       />

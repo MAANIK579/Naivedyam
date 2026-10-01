@@ -14,8 +14,8 @@ const { createMenuItemSchema, createCategorySchema } = require('../validators/me
 
 const router = express.Router();
 
-// All admin routes require authentication + admin role
-router.use(authMiddleware, authorize('admin'));
+// Admin and delivery fulfillment routes require authentication + admin or delivery_partner role
+router.use(authMiddleware, authorize('admin', 'delivery_partner'));
 
 // GET /api/admin/dashboard — Dashboard stats
 router.get(
@@ -110,6 +110,25 @@ router.get(
 
     const pages = Math.ceil(total / limit);
     res.json({ orders, page, pages, total });
+  })
+);
+
+// GET /api/admin/deliveries/active — Active orders for delivery fulfillment
+router.get(
+  '/deliveries/active',
+  asyncHandler(async (req, res) => {
+    const orders = await Order.find({
+      status: { $in: ['preparing', 'out_for_delivery'] },
+    })
+      .populate('user', 'name phone email')
+      .populate('items.menu_item', 'name price image_url emoji')
+      .sort({ created_at: 1 })
+      .lean();
+
+    res.json({
+      deliveries: orders,
+      count: orders.length,
+    });
   })
 );
 

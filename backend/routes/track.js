@@ -5,6 +5,12 @@ const authMiddleware = require('../middleware/auth');
 const authorize = require('../middleware/authorize');
 const asyncHandler = require('../utils/asyncHandler');
 const { sendOrderNotification } = require('../services/notification.service');
+const {
+  sendOrderConfirmationAlert,
+  sendOrderDispatchAlert,
+  sendOrderDeliveredAlert,
+  sendOrderCancelledAlert,
+} = require('../services/communication.service');
 
 const router = express.Router();
 
@@ -86,11 +92,11 @@ router.get(
   })
 );
 
-// PATCH /api/track/:orderId/status — admin-only: update order status
+// PATCH /api/track/:orderId/status — admin & delivery_partner: update order status
 router.patch(
   '/:orderId/status',
   authMiddleware,
-  authorize('admin'),
+  authorize('admin', 'delivery_partner'),
   asyncHandler(async (req, res) => {
     const { status } = req.body;
 
@@ -98,7 +104,7 @@ router.patch(
       return res.status(400).json({ error: 'Invalid status', valid: [...STATUS_STEPS, 'cancelled'] });
     }
 
-    const order = await Order.findById(req.params.orderId);
+    const order = await Order.findById(req.params.orderId).populate('user', 'name phone email');
     if (!order) return res.status(404).json({ error: 'Order not found' });
 
     order.status = status;
@@ -123,13 +129,32 @@ router.patch(
     try {
       const meta = STATUS_META[status] || { label: status, desc: '' };
       await sendOrderNotification(
-        order.user,
+        order.user?._id || order.user,
         `Order ${order.display_id} — ${meta.label}`,
         meta.desc,
         { orderId: order._id.toString(), status }
       );
     } catch (err) {
       console.error('Notification error:', err.message);
+    }
+
+    // Trigger WhatsApp & SMS communication alerts
+    if (status === 'out_for_delivery') {
+      sendOrderDispatchAlert(order.user, order).catch(err => {
+        console.error('Dispatch alert error:', err.message);
+      });
+    } else if (status === 'delivered') {
+      sendOrderDeliveredAlert(order.user, order).catch(err => {
+        console.error('Delivered alert error:', err.message);
+      });
+    } else if (status === 'cancelled') {
+      sendOrderCancelledAlert(order.user, order, order.cancellation_reason).catch(err => {
+        console.error('Cancellation alert error:', err.message);
+      });
+    } else if (status === 'confirmed') {
+      sendOrderConfirmationAlert(order.user, order).catch(err => {
+        console.error('Confirmation alert error:', err.message);
+      });
     }
 
     // Emit socket event if Socket.IO is configured

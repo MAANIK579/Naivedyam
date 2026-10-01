@@ -45,6 +45,7 @@ export const api = {
 
   /* Orders */
   getAllOrders:    (params)     => axiosInstance.get('/admin/orders', { params }),
+  getActiveDeliveries: ()      => axiosInstance.get('/admin/deliveries/active'),
   getOrderDetail: (id)         => axiosInstance.get(`/admin/orders/${id}`),
   updateOrderStatus: (id, status) =>
     axiosInstance.patch(`/track/${id}/status`, { status }),

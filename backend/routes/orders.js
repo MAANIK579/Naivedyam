@@ -9,6 +9,7 @@ const { placeOrderSchema } = require('../validators/order.validator');
 const asyncHandler = require('../utils/asyncHandler');
 const { validateCoupon, applyCouponUsage } = require('../services/coupon.service');
 const { sendOrderNotification } = require('../services/notification.service');
+const { sendOrderConfirmationAlert, sendOrderCancelledAlert } = require('../services/communication.service');
 
 const router = express.Router();
 
@@ -128,6 +129,11 @@ router.post(
       } catch (err) {
         console.error('Order notification error:', err.message);
       }
+
+      // WhatsApp / SMS order confirmation trigger
+      sendOrderConfirmationAlert(req.user, order).catch(err => {
+        console.error('Communication alert error:', err.message);
+      });
 
       // Notify kitchen via Socket.IO
       const io = req.app.get('io');
@@ -315,6 +321,11 @@ router.post(
         timestamp: new Date(),
       });
     }
+
+    // Trigger customer WhatsApp & SMS cancellation alert
+    sendOrderCancelledAlert(req.user, order, order.cancellation_reason).catch(err => {
+      console.error('Cancellation alert error:', err.message);
+    });
 
     res.json({
       message: 'Order cancelled successfully',

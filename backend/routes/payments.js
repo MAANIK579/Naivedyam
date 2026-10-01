@@ -8,6 +8,7 @@ const authMiddleware = require('../middleware/auth');
 const Order = require('../models/Order');
 const config = require('../config');
 const { sendOrderNotification } = require('../services/notification.service');
+const { sendOrderConfirmationAlert } = require('../services/communication.service');
 
 const router = express.Router();
 
@@ -109,6 +110,11 @@ router.post(
     } catch (err) {
       console.error('Payment notification error:', err.message);
     }
+
+    // Trigger customer WhatsApp & SMS confirmation alert
+    sendOrderConfirmationAlert(req.user, order).catch(err => {
+      console.error('Communication alert error:', err.message);
+    });
 
     // Emit socket events to kitchen and customer
     const io = req.app.get('io');
