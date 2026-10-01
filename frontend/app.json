@@ -1,0 +1,45 @@
+{
+  "expo": {
+    "name": "Navedyam",
+    "slug": "navedyam",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#3D1F0A"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.navedyam.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#3D1F0A"
+      },
+      "package": "com.navedyam.app",
+      "googleServicesFile": "./google-services.json"
+    },
+    "plugins": [
+      "expo-secure-store",
+      "expo-dev-client",
+      "expo-notifications",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "useCleartextTraffic": true
+          }
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "f24ee4f9-6c58-415b-8c0c-0af4ea6e9c66"
+      }
+    },
+    "owner": "maanik_expo5"
+  }
+}

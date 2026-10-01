@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "283612889721",
+    "project_id": "navedyam-99625",
+    "storage_bucket": "navedyam-99625.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:283612889721:android:6075d168d00972876a4aa8",
+        "android_client_info": {
+          "package_name": "com.navedyam.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB5buPlYWITVG_xr2VuNibj70qm3fHwTio"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
