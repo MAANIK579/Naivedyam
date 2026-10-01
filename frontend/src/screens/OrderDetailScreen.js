@@ -67,6 +67,29 @@ export default function OrderDetailScreen({ navigation, route }) {
     }
   }
 
+  async function handleCancel() {
+    Alert.alert(
+      'Cancel Order',
+      'Are you sure you want to cancel this order?',
+      [
+        { text: 'Keep Order', style: 'cancel' },
+        {
+          text: 'Yes, Cancel',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await api.cancelOrder(order._id || order.id, 'Cancelled by user');
+              Alert.alert('Order Cancelled', 'Your order has been cancelled.');
+              loadOrder();
+            } catch (err) {
+              Alert.alert('Error', err.message || 'Could not cancel order');
+            }
+          },
+        },
+      ]
+    );
+  }
+
   const styles = createStyles(colors);
 
   if (loading) {
@@ -233,6 +256,16 @@ export default function OrderDetailScreen({ navigation, route }) {
               activeOpacity={0.85}
             >
               <Text style={[styles.actionBtnText, { color: colors.saffron }]}>📍 Track Order</Text>
+            </TouchableOpacity>
+          )}
+
+          {(order.status === 'placed' || order.status === 'confirmed') && (
+            <TouchableOpacity
+              style={[styles.actionBtn, { backgroundColor: '#FEF2F2', borderWidth: 1.5, borderColor: colors.error }]}
+              onPress={handleCancel}
+              activeOpacity={0.85}
+            >
+              <Text style={[styles.actionBtnText, { color: colors.error }]}>❌ Cancel Order</Text>
             </TouchableOpacity>
           )}
 

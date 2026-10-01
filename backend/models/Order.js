@@ -17,6 +17,7 @@ const deliveryAddressSchema = new mongoose.Schema({
   label:        { type: String, default: '' },
   full_address: { type: String, required: true },
   landmark:     { type: String, default: '' },
+  delivery_instructions: { type: String, default: '' },
   lat:          { type: Number, default: 0 },
   lng:          { type: Number, default: 0 },
 }, { _id: false });

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
   View, Text, ScrollView, StyleSheet,
-  ActivityIndicator, TouchableOpacity, Alert, RefreshControl,
+  ActivityIndicator, TouchableOpacity, Alert, RefreshControl, Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { api } from '../api/client';
@@ -20,6 +20,14 @@ const STEP_ICONS = {
 
 const FINAL_ORDER_STATUSES = ['delivered', 'cancelled'];
 
+const CANCELLATION_REASONS = [
+  'Placed order by mistake',
+  'Wait time is too long',
+  'Need to change items or delivery address',
+  'Decided to eat later or dine out',
+  'Other reason',
+];
+
 export default function TrackScreen({ route, navigation }) {
   const { colors, isDark } = useTheme();
   const { socket } = useSocket();
@@ -28,6 +36,27 @@ export default function TrackScreen({ route, navigation }) {
   const [trackNotice, setTrackNotice] = useState('');
   const [loading,  setLoading]  = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [cancelModalVisible, setCancelModalVisible] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+
+  async function handleCancelOrder(reason) {
+    if (!tracking?.order?.id) return;
+    setCancelling(true);
+    try {
+      await api.cancelOrder(tracking.order.id, reason);
+      setCancelModalVisible(false);
+      setTracking(prev => prev ? {
+        ...prev,
+        order: { ...prev.order, status: 'cancelled' },
+      } : prev);
+      setTrackNotice('This order has been cancelled.');
+      Alert.alert('Order Cancelled', 'Your order was successfully cancelled.');
+    } catch (err) {
+      Alert.alert('Cancellation Failed', err.message || 'Could not cancel order.');
+    } finally {
+      setCancelling(false);
+    }
+  }
 
   // Auto-track if navigated with an order ID
   useEffect(() => {
@@ -255,6 +284,21 @@ export default function TrackScreen({ route, navigation }) {
                 <Text style={styles.rateBtnText}>Rate Your Order</Text>
               </TouchableOpacity>
             )}
+
+            {/* Cancel Order Button — permitted while in placed or confirmed status */}
+            {(tracking.order.status === 'placed' || tracking.order.status === 'confirmed') && (
+              <TouchableOpacity
+                style={styles.cancelBtn}
+                onPress={() => setCancelModalVisible(true)}
+                disabled={cancelling}
+                activeOpacity={0.85}
+              >
+                <Ionicons name="close-circle-outline" size={18} color={colors.error} />
+                <Text style={styles.cancelBtnText}>
+                  {cancelling ? 'Cancelling...' : 'Cancel Order'}
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
         )}
 
@@ -266,6 +310,54 @@ export default function TrackScreen({ route, navigation }) {
           </View>
         )}
       </View>
+
+      {/* Cancellation Reason Modal */}
+      <Modal
+        visible={cancelModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setCancelModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Cancel Order</Text>
+              <TouchableOpacity onPress={() => setCancelModalVisible(false)}>
+                <Ionicons name="close" size={22} color={colors.textMuted} />
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.modalSub}>
+              Select a reason for cancelling order {tracking?.order?.display_id || ''}:
+            </Text>
+            {CANCELLATION_REASONS.map((reasonText, idx) => (
+              <TouchableOpacity
+                key={idx}
+                style={styles.reasonOption}
+                onPress={() => {
+                  Alert.alert(
+                    'Confirm Cancellation',
+                    `Are you sure you want to cancel this order? Reason: "${reasonText}"`,
+                    [
+                      { text: 'Keep Order', style: 'cancel' },
+                      {
+                        text: 'Cancel Order',
+                        style: 'destructive',
+                        onPress: () => handleCancelOrder(reasonText),
+                      },
+                    ]
+                  );
+                }}
+              >
+                <Ionicons name="radio-button-off" size={18} color={colors.saffron} style={{ marginRight: 10 }} />
+                <Text style={styles.reasonText}>{reasonText}</Text>
+              </TouchableOpacity>
+            ))}
+            {cancelling && (
+              <ActivityIndicator size="small" color={colors.saffron} style={{ marginTop: 12 }} />
+            )}
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -327,6 +419,75 @@ const createStyles = (colors, isDark) => StyleSheet.create({
     paddingVertical: 14, marginTop: 20, ...SHADOW.medium,
   },
   rateBtnText: { fontSize: 15, ...FONTS.bold, color: colors.white },
+  cancelBtn: {
+    marginTop: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1.5,
+    borderColor: colors.error,
+    backgroundColor: isDark ? 'rgba(239, 68, 68, 0.1)' : '#FEF2F2',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  cancelBtnText: {
+    color: colors.error,
+    ...FONTS.semibold,
+    fontSize: 14,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalCard: {
+    width: '100%',
+    maxWidth: 380,
+    backgroundColor: colors.cardBg,
+    borderRadius: RADIUS.xl,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
+    ...SHADOW.large,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  modalTitle: {
+    fontSize: 18,
+    ...FONTS.bold,
+    color: colors.text,
+  },
+  modalSub: {
+    fontSize: 13,
+    color: colors.textMuted,
+    marginBottom: 16,
+    lineHeight: 18,
+  },
+  reasonOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.creamDark,
+    marginBottom: 8,
+  },
+  reasonText: {
+    fontSize: 13,
+    color: colors.text,
+    ...FONTS.medium,
+    flex: 1,
+  },
   emptyTitle:    { fontSize: 20, ...FONTS.bold, color: colors.text, marginTop: 12 },
   emptySub:      { fontSize: 13, color: colors.textMuted, marginTop: 4, textAlign: 'center' },
 });

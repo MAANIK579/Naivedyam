@@ -41,6 +41,18 @@ export default function AddressCard({ address, onPress, selected }) {
           <Text style={styles.landmark}>Near: {address.landmark}</Text>
         </View>
       )}
+      {!!address.delivery_instructions && (
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4, gap: 4 }}>
+          <Ionicons name="chatbubble-ellipses-outline" size={12} color={colors.saffron} />
+          <Text style={styles.instructions}>Note: {address.delivery_instructions}</Text>
+        </View>
+      )}
+      {!!(address.lat && address.lng) && (
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4, gap: 4 }}>
+          <Ionicons name="pin" size={12} color={colors.green} />
+          <Text style={styles.gpsText}>GPS: {Number(address.lat).toFixed(4)}°, {Number(address.lng).toFixed(4)}°</Text>
+        </View>
+      )}
     </TouchableOpacity>
   );
 }
@@ -108,5 +120,16 @@ const createStyles = (colors) => StyleSheet.create({
     ...FONTS.regular,
     fontSize: 12,
     color: colors.textMuted,
+  },
+  instructions: {
+    ...FONTS.regular,
+    fontSize: 12,
+    color: colors.saffronDeep || colors.saffron,
+    flex: 1,
+  },
+  gpsText: {
+    ...FONTS.medium,
+    fontSize: 11,
+    color: colors.green,
   },
 });

@@ -63,9 +63,21 @@ router.post(
     // Build delivery address
     let deliveryAddress;
     if (typeof address === 'string') {
-      deliveryAddress = { full_address: address };
+      deliveryAddress = {
+        full_address: address,
+        delivery_instructions: req.body.delivery_instructions || '',
+      };
+    } else if (address && typeof address === 'object') {
+      deliveryAddress = {
+        label: address.label || '',
+        full_address: address.full_address || address.address || '',
+        landmark: address.landmark || '',
+        delivery_instructions: address.delivery_instructions || req.body.delivery_instructions || '',
+        lat: Number(address.lat) || 0,
+        lng: Number(address.lng) || 0,
+      };
     } else {
-      deliveryAddress = address;
+      deliveryAddress = { full_address: 'Address not provided' };
     }
 
     // Build order items array
@@ -278,7 +290,42 @@ router.post(
 
     await order.save();
 
-    res.json({ message: 'Order cancelled successfully' });
+    // Emit real-time Socket.IO events to customer and kitchen
+    const io = req.app.get('io');
+    if (io) {
+      // Notify order tracking room
+      io.to(`order:${order._id}`).emit('order:status_update', {
+        orderId: order._id,
+        status: 'cancelled',
+        meta: { label: 'Order Cancelled', desc: order.cancellation_reason, eta: '' },
+        timestamp: new Date(),
+      });
+
+      // Notify kitchen dashboard
+      io.to('kitchen').emit('kitchen:order_cancelled', {
+        orderId: order._id,
+        display_id: order.display_id,
+        reason: order.cancellation_reason,
+        timestamp: new Date(),
+      });
+      io.to('kitchen').emit('order:cancelled', {
+        orderId: order._id,
+        display_id: order.display_id,
+        reason: order.cancellation_reason,
+        timestamp: new Date(),
+      });
+    }
+
+    res.json({
+      message: 'Order cancelled successfully',
+      order: {
+        id: order._id,
+        display_id: order.display_id,
+        status: order.status,
+        cancellation_reason: order.cancellation_reason,
+        cancelled_at: order.cancelled_at,
+      },
+    });
   })
 );
 

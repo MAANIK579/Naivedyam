@@ -19,8 +19,9 @@ export default function CartScreen({ navigation }) {
   const { user } = useAuth();
   const { colors, isDark } = useTheme();
 
+  const [selectedAddress, setSelectedAddress] = useState(user?.addresses?.[0] || null);
   const [address,     setAddress]     = useState(user?.addresses?.[0]?.full_address || '');
-  const [notes,       setNotes]       = useState('');
+  const [notes,       setNotes]       = useState(user?.addresses?.[0]?.delivery_instructions || '');
   const [couponInput, setCouponInput] = useState('');
   const [showCoupon,  setShowCoupon]  = useState(false);
 
@@ -40,8 +41,18 @@ export default function CartScreen({ navigation }) {
 
     const orderParams = {
       items: cartItems.map(({ item, qty }) => ({ item_id: item.id || item._id, quantity: qty })),
-      address,
-      notes,
+      address: selectedAddress ? {
+        label: selectedAddress.label || 'Home',
+        full_address: address.trim(),
+        landmark: selectedAddress.landmark || '',
+        delivery_instructions: notes.trim(),
+        lat: selectedAddress.lat || 0,
+        lng: selectedAddress.lng || 0,
+      } : {
+        full_address: address.trim(),
+        delivery_instructions: notes.trim(),
+      },
+      notes: notes.trim(),
       coupon_code: appliedCoupon?.code || '',
     };
 
@@ -110,7 +121,13 @@ export default function CartScreen({ navigation }) {
           <Text style={styles.sectionTitle}>Delivery Address</Text>
           <TouchableOpacity onPress={() => navigation.navigate('Addresses', {
             selectMode: true,
-            onSelect: (addr) => setAddress(addr.full_address),
+            onSelect: (addr) => {
+              setSelectedAddress(addr);
+              setAddress(addr.full_address || '');
+              if (addr.delivery_instructions) {
+                setNotes(addr.delivery_instructions);
+              }
+            },
           })}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
               <Ionicons name="location-outline" size={14} color={colors.saffron} />

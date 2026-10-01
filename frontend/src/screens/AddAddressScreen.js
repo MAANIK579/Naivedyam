@@ -1,9 +1,9 @@
-// src/screens/AddAddressScreen.js
 import React, { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   SafeAreaView, ScrollView, ActivityIndicator, Alert,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { FONTS, RADIUS, SHADOW } from '../theme';
 import { Button } from '../components';
@@ -16,11 +16,15 @@ export default function AddAddressScreen({ navigation, route }) {
   const isEdit = !!existingAddress;
   const { colors } = useTheme();
 
-  const [label, setLabel]           = useState(existingAddress?.label || 'Home');
-  const [fullAddress, setFullAddress] = useState(existingAddress?.full_address || '');
-  const [landmark, setLandmark]     = useState(existingAddress?.landmark || '');
-  const [saving, setSaving]         = useState(false);
-  const [error, setError]           = useState('');
+  const [label, setLabel]                       = useState(existingAddress?.label || 'Home');
+  const [fullAddress, setFullAddress]           = useState(existingAddress?.full_address || '');
+  const [landmark, setLandmark]                 = useState(existingAddress?.landmark || '');
+  const [deliveryInstructions, setDeliveryInstructions] = useState(existingAddress?.delivery_instructions || '');
+  const [lat, setLat]                           = useState(existingAddress?.lat || 0);
+  const [lng, setLng]                           = useState(existingAddress?.lng || 0);
+  const [locating, setLocating]                 = useState(false);
+  const [saving, setSaving]                     = useState(false);
+  const [error, setError]                       = useState('');
 
   async function handleSave() {
     if (!fullAddress.trim()) {
@@ -35,6 +39,9 @@ export default function AddAddressScreen({ navigation, route }) {
         label,
         full_address: fullAddress.trim(),
         landmark: landmark.trim(),
+        delivery_instructions: deliveryInstructions.trim(),
+        lat: Number(lat) || 0,
+        lng: Number(lng) || 0,
       };
 
       if (isEdit) {
@@ -53,6 +60,33 @@ export default function AddAddressScreen({ navigation, route }) {
       Alert.alert('Error', err.message || 'Could not save address');
     } finally {
       setSaving(false);
+    }
+  }
+
+  function handlePinLocation() {
+    setLocating(true);
+    if (typeof navigator !== 'undefined' && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setLat(parseFloat(pos.coords.latitude.toFixed(6)));
+          setLng(parseFloat(pos.coords.longitude.toFixed(6)));
+          setLocating(false);
+          Alert.alert('GPS Fixed', `Captured GPS coordinates: ${pos.coords.latitude.toFixed(4)}° N, ${pos.coords.longitude.toFixed(4)}° E`);
+        },
+        (_err) => {
+          // Fallback Bhiwani local delivery zone coordinates
+          setLat(28.7931);
+          setLng(76.1397);
+          setLocating(false);
+          Alert.alert('Location Pinned', 'Using Bhiwani delivery zone coordinates (28.7931° N, 76.1397° E).');
+        },
+        { enableHighAccuracy: true, timeout: 5000 }
+      );
+    } else {
+      setLat(28.7931);
+      setLng(76.1397);
+      setLocating(false);
+      Alert.alert('Location Pinned', 'GPS coordinates pinned to Bhiwani delivery hub (28.7931° N, 76.1397° E).');
     }
   }
 
@@ -109,6 +143,44 @@ export default function AddAddressScreen({ navigation, route }) {
           placeholderTextColor={colors.textMuted}
           style={styles.input}
         />
+
+        {/* Delivery Instructions */}
+        <Text style={[styles.fieldLabel, { marginTop: 16 }]}>Delivery Instructions (optional)</Text>
+        <TextInput
+          value={deliveryInstructions}
+          onChangeText={setDeliveryInstructions}
+          placeholder="e.g. Leave with guard / Ring bell twice / 2nd floor"
+          placeholderTextColor={colors.textMuted}
+          style={styles.input}
+        />
+
+        {/* GPS Coordinates Section */}
+        <View style={{ marginTop: 16, marginBottom: 20 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+            <Text style={styles.fieldLabel}>GPS Geolocation Pin</Text>
+            <TouchableOpacity
+              onPress={handlePinLocation}
+              disabled={locating}
+              style={styles.gpsBtn}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="navigate-circle-outline" size={16} color={colors.saffron} />
+              <Text style={styles.gpsBtnText}>
+                {locating ? 'Locating...' : 'Use Current Location'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+          {lat && lng ? (
+            <View style={styles.gpsBadge}>
+              <Ionicons name="location" size={14} color={colors.green} />
+              <Text style={styles.gpsBadgeText}>
+                Pinned: {Number(lat).toFixed(4)}° N, {Number(lng).toFixed(4)}° E
+              </Text>
+            </View>
+          ) : (
+            <Text style={styles.gpsHint}>No GPS pin set. Tap above to attach exact delivery coordinates for rider navigation.</Text>
+          )}
+        </View>
 
         <Button
           title={saving ? '' : (isEdit ? 'Update Address' : 'Save Address')}
@@ -224,5 +296,43 @@ const createStyles = (colors) => StyleSheet.create({
   },
   saveBtn: {
     marginTop: 28,
+  },
+  gpsBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: RADIUS.full,
+    borderWidth: 1,
+    borderColor: colors.saffron,
+    backgroundColor: colors.saffronPale,
+  },
+  gpsBtnText: {
+    ...FONTS.semibold,
+    fontSize: 12,
+    color: colors.saffron,
+  },
+  gpsBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: RADIUS.md,
+    backgroundColor: colors.greenPale || '#E8F5E9',
+    borderWidth: 1,
+    borderColor: colors.green || '#4CAF50',
+  },
+  gpsBadgeText: {
+    ...FONTS.medium,
+    fontSize: 12,
+    color: colors.text,
+  },
+  gpsHint: {
+    ...FONTS.regular,
+    fontSize: 12,
+    color: colors.textMuted,
+    lineHeight: 16,
   },
 });

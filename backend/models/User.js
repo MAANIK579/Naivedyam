@@ -5,6 +5,7 @@ const addressSchema = new mongoose.Schema({
   label:        { type: String, enum: ['Home', 'Work', 'Other'], default: 'Home' },
   full_address: { type: String, required: true },
   landmark:     { type: String, default: '' },
+  delivery_instructions: { type: String, default: '' },
   lat:          { type: Number, default: 0 },
   lng:          { type: Number, default: 0 },
   is_default:   { type: Boolean, default: false },

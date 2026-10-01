@@ -31,7 +31,7 @@ router.post(
       throw new ApiError(404, 'User not found');
     }
 
-    const { label, full_address, landmark, lat, lng, is_default } = req.body;
+    const { label, full_address, landmark, delivery_instructions, lat, lng, is_default } = req.body;
 
     if (!full_address) {
       throw new ApiError(400, 'full_address is required');
@@ -48,6 +48,7 @@ router.post(
       label: label || 'Home',
       full_address,
       landmark: landmark || '',
+      delivery_instructions: delivery_instructions || '',
       lat: lat || 0,
       lng: lng || 0,
       is_default: is_default || false,
@@ -76,11 +77,12 @@ router.put(
       throw new ApiError(404, 'Address not found');
     }
 
-    const { label, full_address, landmark, lat, lng, is_default } = req.body;
+    const { label, full_address, landmark, delivery_instructions, lat, lng, is_default } = req.body;
 
     if (label !== undefined) address.label = label;
     if (full_address !== undefined) address.full_address = full_address;
     if (landmark !== undefined) address.landmark = landmark;
+    if (delivery_instructions !== undefined) address.delivery_instructions = delivery_instructions;
     if (lat !== undefined) address.lat = lat;
     if (lng !== undefined) address.lng = lng;
 
