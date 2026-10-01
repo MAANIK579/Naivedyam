@@ -9,11 +9,11 @@ export const LIGHT_COLORS = {
   saffronPale:  '#DCFCE7',
 
   // Background tones (light)
-  cream:        '#fbfbfbff',
-  creamDark:    '#F8FAF9',
+  cream:        '#FAFAF9',
+  creamDark:    '#F5F5F4',
 
   // Accent colors
-  turmeric:     '#BBF7D0',
+  turmeric:     '#F59E0B',
 
   // Brown tones (used for headers etc, now dark green in light mode)
   brown:        '#166534',
@@ -45,7 +45,7 @@ export const LIGHT_COLORS = {
   successPale:  '#F0FDF4',
 
   // Overlay
-  overlay:      'rgba(0, 0, 0, 0.5)',
+  overlay:      'rgba(15, 23, 42, 0.45)',
 
   // Tab bar
   tabBarBg:     '#FFFFFF',
@@ -53,7 +53,7 @@ export const LIGHT_COLORS = {
   tabInactive:  '#94A3B8',
 
   // Status bar
-  statusBarStyle: 'light-content',
+  statusBarStyle: 'dark-content',
 };
 
 // Dark Mode Colors (Premium Warm Mocha & Amber)
@@ -145,22 +145,22 @@ export const SHADOW = {
   small: {
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.22,
-    shadowRadius: 8,
-    elevation: 3,
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 2,
   },
   medium: {
     shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.28,
-    shadowRadius: 16,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    elevation: 4,
   },
   large: {
     shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 14 },
-    shadowOpacity: 0.34,
-    shadowRadius: 24,
-    elevation: 10,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.16,
+    shadowRadius: 20,
+    elevation: 8,
   },
 };

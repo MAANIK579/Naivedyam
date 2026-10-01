@@ -175,11 +175,8 @@ export default function HomeScreen({ navigation }) {
                 key={item.id}
                 style={styles.popularCard}
                 onPress={() => navigation.navigate('Menu')}
-                activeOpacity={0.85}
+                activeOpacity={0.88}
               >
-                <View style={styles.popularTag}>
-                  <Text style={styles.popularTagText}>{item.tag}</Text>
-                </View>
                 <View style={styles.popularMedia}>
                   {item.image_url ? (
                     <Image
@@ -188,11 +185,25 @@ export default function HomeScreen({ navigation }) {
                       resizeMode="cover"
                     />
                   ) : (
-                    <Text style={styles.popularEmoji}>{item.emoji}</Text>
+                    <View style={styles.emojiFallback}>
+                      <Text style={styles.popularEmoji}>{item.emoji}</Text>
+                    </View>
+                  )}
+                  {item.tag && (
+                    <View style={styles.popularTag}>
+                      <Text style={styles.popularTagText}>{item.tag}</Text>
+                    </View>
                   )}
                 </View>
-                <Text style={styles.popularName} numberOfLines={1}>{item.name}</Text>
-                <Text style={styles.popularPrice}>₹{item.price}</Text>
+                <View style={styles.popularContent}>
+                  <Text style={styles.popularName} numberOfLines={1}>{item.name}</Text>
+                  <View style={styles.popularBottomRow}>
+                    <Text style={styles.popularPrice}>₹{item.price}</Text>
+                    <View style={styles.addMiniBtn}>
+                      <Ionicons name="add" size={14} color={colors.white} />
+                    </View>
+                  </View>
+                </View>
               </TouchableOpacity>
             ))}
           </ScrollView>
@@ -284,39 +295,56 @@ const createStyles = (colors, isDark) => StyleSheet.create({
     marginBottom: 6, ...SHADOW.small,
   },
   catLabel: { fontSize: 12, ...FONTS.semibold, color: colors.text },
-  popularSection: { marginBottom: 24 },
+  popularSection: { marginBottom: 28 },
   popularCard: {
-    width: 140, backgroundColor: colors.cardBg, borderRadius: RADIUS.lg,
-    padding: 14, marginRight: 16, alignItems: 'center',
-    borderWidth: 1, borderColor: colors.border, ...SHADOW.small,
+    width: 164, backgroundColor: colors.cardBg, borderRadius: RADIUS.lg,
+    marginRight: 14, overflow: 'hidden',
+    borderWidth: 1, borderColor: colors.borderLight, ...SHADOW.small,
   },
-  popularTag: {
-    position: 'absolute', top: 8, left: 8,
-    backgroundColor: colors.saffron, paddingHorizontal: 6, paddingVertical: 2,
-    borderRadius: RADIUS.sm,
-  },
-  popularTagText: { fontSize: 9, ...FONTS.bold, color: colors.white, textTransform: 'uppercase' },
   popularMedia: {
-    width: 72, height: 72, borderRadius: RADIUS.md, overflow: 'hidden',
-    alignItems: 'center', justifyContent: 'center',
-    marginTop: 14, marginBottom: 8,
+    width: '100%', height: 104,
     backgroundColor: isDark ? colors.border : '#F3F4F6',
+    position: 'relative', overflow: 'hidden',
   },
   popularImage: { width: '100%', height: '100%' },
-  popularEmoji: { fontSize: 36 },
-  popularName: { fontSize: 13, ...FONTS.semibold, color: colors.text, textAlign: 'center' },
-  popularPrice: { fontSize: 15, ...FONTS.bold, color: colors.saffronDeep, marginTop: 4 },
+  emojiFallback: {
+    width: '100%', height: '100%',
+    alignItems: 'center', justifyContent: 'center',
+    backgroundColor: isDark ? colors.creamDark : '#F8FAF9',
+  },
+  popularEmoji: { fontSize: 40 },
+  popularTag: {
+    position: 'absolute', top: 7, left: 7,
+    backgroundColor: colors.saffron, paddingHorizontal: 7, paddingVertical: 2.5,
+    borderRadius: RADIUS.sm,
+  },
+  popularTagText: { fontSize: 8.5, ...FONTS.bold, color: '#FFFFFF', textTransform: 'uppercase', letterSpacing: 0.4 },
+  popularContent: { padding: 11 },
+  popularName: { fontSize: 13.5, ...FONTS.semibold, color: colors.text },
+  popularBottomRow: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    marginTop: 6,
+  },
+  popularPrice: { fontSize: 15, ...FONTS.bold, color: colors.saffron },
+  addMiniBtn: {
+    width: 24, height: 24, borderRadius: 6,
+    backgroundColor: colors.saffron,
+    alignItems: 'center', justifyContent: 'center',
+  },
   quickActions: {
     flexDirection: 'row', justifyContent: 'space-between', marginBottom: 24, gap: 10,
   },
   quickAction: {
-    flex: 1, alignItems: 'center', padding: 16, borderRadius: RADIUS.lg,
-    gap: 8,
+    flex: 1, alignItems: 'center', paddingVertical: 14, paddingHorizontal: 6,
+    borderRadius: RADIUS.lg, borderWidth: 1,
+    borderColor: isDark ? colors.border : 'rgba(34,197,94,0.18)',
+    gap: 6, ...SHADOW.small,
   },
   quickActionText: { fontSize: 11, ...FONTS.semibold, color: colors.text, textAlign: 'center' },
   footer: {
     marginTop: 8, padding: 16,
     backgroundColor: colors.creamDark, borderRadius: RADIUS.lg, alignItems: 'center',
+    borderWidth: 1, borderColor: colors.borderLight,
   },
   footerText: { color: colors.textMuted, fontSize: 12, textAlign: 'center', lineHeight: 18 },
 });

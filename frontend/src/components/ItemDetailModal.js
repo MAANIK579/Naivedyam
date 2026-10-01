@@ -389,6 +389,8 @@ const createStyles = (colors, isDark) => StyleSheet.create({
     justifyContent: 'space-around',
     backgroundColor: colors.creamDark,
     borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
     padding: 16,
     marginBottom: 20,
   },
@@ -420,6 +422,8 @@ const createStyles = (colors, isDark) => StyleSheet.create({
   reviewCard: {
     backgroundColor: colors.creamDark,
     borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
     padding: 12,
     marginBottom: 10,
   },
@@ -490,7 +494,7 @@ const createStyles = (colors, isDark) => StyleSheet.create({
     alignItems: 'center',
     backgroundColor: colors.creamDark,
     borderRadius: RADIUS.lg,
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderColor: colors.border,
   },
   qtyBtn: {

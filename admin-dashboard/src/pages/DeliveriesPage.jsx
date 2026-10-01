@@ -185,18 +185,19 @@ export default function DeliveriesPage() {
         <div
           onClick={() => setFilterStatus('all')}
           style={{
-            background: filterStatus === 'all' ? 'var(--saffron-glow)' : 'var(--card-bg)',
-            border: `1.5px solid ${filterStatus === 'all' ? 'var(--saffron)' : 'var(--border)'}`,
-            borderRadius: 12,
-            padding: '16px 20px',
+            background: filterStatus === 'all' ? 'var(--saffron-pale)' : 'var(--card-bg, #fff)',
+            border: `1px solid ${filterStatus === 'all' ? 'var(--saffron)' : 'var(--border)'}`,
+            borderRadius: 14,
+            padding: '18px 22px',
             cursor: 'pointer',
-            transition: 'all 0.2s ease',
+            transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+            boxShadow: 'var(--shadow-xs)',
           }}
         >
-          <div style={{ color: 'var(--text-muted)', fontSize: '0.82rem', fontWeight: 600, marginBottom: 4 }}>
-            TOTAL ACTIVE
+          <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 4 }}>
+            Total Active
           </div>
-          <div style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+          <div style={{ fontSize: '1.9rem', fontWeight: 800, color: 'var(--text-primary)', fontVariantNumeric: 'tabular-nums' }}>
             {deliveries.length}
           </div>
         </div>
@@ -204,18 +205,19 @@ export default function DeliveriesPage() {
         <div
           onClick={() => setFilterStatus('preparing')}
           style={{
-            background: filterStatus === 'preparing' ? 'rgba(234, 88, 12, 0.12)' : 'var(--card-bg)',
-            border: `1.5px solid ${filterStatus === 'preparing' ? '#ea580c' : 'var(--border)'}`,
-            borderRadius: 12,
-            padding: '16px 20px',
+            background: filterStatus === 'preparing' ? 'rgba(234, 88, 12, 0.10)' : 'var(--card-bg, #fff)',
+            border: `1px solid ${filterStatus === 'preparing' ? '#ea580c' : 'var(--border)'}`,
+            borderRadius: 14,
+            padding: '18px 22px',
             cursor: 'pointer',
-            transition: 'all 0.2s ease',
+            transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+            boxShadow: 'var(--shadow-xs)',
           }}
         >
-          <div style={{ color: '#ea580c', fontSize: '0.82rem', fontWeight: 600, marginBottom: 4 }}>
-            READY FOR PICKUP
+          <div style={{ color: '#ea580c', fontSize: '0.8rem', fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 4 }}>
+            Ready for Pickup
           </div>
-          <div style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+          <div style={{ fontSize: '1.9rem', fontWeight: 800, color: 'var(--text-primary)', fontVariantNumeric: 'tabular-nums' }}>
             {preparingList.length}
           </div>
         </div>
@@ -223,18 +225,19 @@ export default function DeliveriesPage() {
         <div
           onClick={() => setFilterStatus('out_for_delivery')}
           style={{
-            background: filterStatus === 'out_for_delivery' ? 'rgba(16, 185, 129, 0.12)' : 'var(--card-bg)',
-            border: `1.5px solid ${filterStatus === 'out_for_delivery' ? '#10b981' : 'var(--border)'}`,
-            borderRadius: 12,
-            padding: '16px 20px',
+            background: filterStatus === 'out_for_delivery' ? 'rgba(16, 185, 129, 0.10)' : 'var(--card-bg, #fff)',
+            border: `1px solid ${filterStatus === 'out_for_delivery' ? '#10b981' : 'var(--border)'}`,
+            borderRadius: 14,
+            padding: '18px 22px',
             cursor: 'pointer',
-            transition: 'all 0.2s ease',
+            transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+            boxShadow: 'var(--shadow-xs)',
           }}
         >
-          <div style={{ color: '#10b981', fontSize: '0.82rem', fontWeight: 600, marginBottom: 4 }}>
-            OUT FOR DELIVERY
+          <div style={{ color: '#10b981', fontSize: '0.8rem', fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 4 }}>
+            Out for Delivery
           </div>
-          <div style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+          <div style={{ fontSize: '1.9rem', fontWeight: 800, color: 'var(--text-primary)', fontVariantNumeric: 'tabular-nums' }}>
             {outForDeliveryList.length}
           </div>
         </div>
@@ -315,21 +318,26 @@ export default function DeliveriesPage() {
               <div
                 key={order._id}
                 style={{
-                  background: 'var(--card-bg)',
-                  border: `1.5px solid ${isOutForDelivery ? '#10b981' : isPreparing ? '#ea580c' : 'var(--border)'}`,
+                  background: 'var(--card-bg, #fff)',
+                  border: isOutForDelivery
+                    ? '1px solid #10b981'
+                    : isPreparing
+                    ? '1px solid rgba(234, 88, 12, 0.7)'
+                    : '1px solid var(--border)',
                   borderRadius: 14,
                   padding: 20,
                   display: 'flex',
                   flexDirection: 'column',
                   gap: 16,
-                  boxShadow: '0 4px 14px rgba(0,0,0,0.05)',
+                  boxShadow: 'var(--shadow-sm)',
                   position: 'relative',
+                  transition: 'box-shadow 0.2s ease, border-color 0.2s ease',
                 }}
               >
                 {/* Card Top: Order ID & Time */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--text-primary)' }}>
+                    <span style={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--text-primary)', fontVariantNumeric: 'tabular-nums' }}>
                       #{order.display_id || String(order._id).slice(-6)}
                     </span>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--text-muted)', fontSize: '0.78rem' }}>
@@ -349,6 +357,7 @@ export default function DeliveriesPage() {
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
+                    border: '1px solid var(--border)',
                   }}
                 >
                   <div>
@@ -374,6 +383,7 @@ export default function DeliveriesPage() {
                         fontSize: '0.82rem',
                         fontWeight: 600,
                         textDecoration: 'none',
+                        transition: 'opacity 0.15s ease',
                       }}
                     >
                       <PhoneIcon size={14} />
@@ -422,16 +432,16 @@ export default function DeliveriesPage() {
                   {instructions && (
                     <div
                       style={{
-                        background: 'rgba(245, 158, 11, 0.12)',
-                        borderLeft: '3px solid #f59e0b',
-                        padding: '8px 12px',
-                        borderRadius: '0 8px 8px 0',
+                        background: 'rgba(245, 158, 11, 0.08)',
+                        border: '1px solid rgba(245, 158, 11, 0.25)',
+                        padding: '10px 14px',
+                        borderRadius: 8,
                         fontSize: '0.82rem',
                         color: 'var(--text-primary)',
                         marginTop: 8,
                       }}
                     >
-                      <strong style={{ color: '#d97706' }}>Instructions: </strong>
+                      <span style={{ color: '#d97706', fontWeight: 700 }}>Note: </span>
                       {instructions}
                     </div>
                   )}

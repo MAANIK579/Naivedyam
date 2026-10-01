@@ -270,7 +270,7 @@ const createStyles = (colors, isDark) => StyleSheet.create({
   sectionTitle: { fontSize: 17, ...FONTS.bold, color: colors.text },
   linkText: { fontSize: 13, color: colors.saffron, ...FONTS.semibold },
   textArea: {
-    backgroundColor: colors.creamDark, borderWidth: 1.5, borderColor: colors.border,
+    backgroundColor: colors.creamDark, borderWidth: 1, borderColor: colors.border,
     borderRadius: RADIUS.md, padding: 12, fontSize: 14, color: colors.text,
     minHeight: 52, textAlignVertical: 'top',
   },
@@ -280,16 +280,20 @@ const createStyles = (colors, isDark) => StyleSheet.create({
     borderRadius: RADIUS.lg, padding: 12, marginBottom: 10, ...SHADOW.small,
   },
   cartItemThumb: {
-    width: 44, height: 44, borderRadius: RADIUS.md, backgroundColor: colors.creamDark,
+    width: 52, height: 52, borderRadius: RADIUS.md, backgroundColor: colors.creamDark,
   },
-  itemName:  { fontSize: 14, ...FONTS.semibold, color: colors.text },
-  itemPrice: { fontSize: 15, ...FONTS.bold, color: colors.saffronDeep, marginTop: 2 },
-  qtyCtrl:   { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  itemName:  { fontSize: 14.5, ...FONTS.semibold, color: colors.text },
+  itemPrice: { fontSize: 15, ...FONTS.bold, color: colors.saffron, marginTop: 2 },
+  qtyCtrl:   {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    backgroundColor: colors.creamDark, borderRadius: RADIUS.md,
+    padding: 3, borderWidth: 1, borderColor: colors.border,
+  },
   qtyBtn: {
-    width: 28, height: 28, borderRadius: 8, backgroundColor: colors.creamDark,
-    borderWidth: 1.5, borderColor: colors.border, alignItems: 'center', justifyContent: 'center',
+    width: 26, height: 26, borderRadius: 6, backgroundColor: colors.cardBg,
+    alignItems: 'center', justifyContent: 'center',
   },
-  qtyNum:    { fontSize: 15, ...FONTS.bold, color: colors.text, minWidth: 20, textAlign: 'center' },
+  qtyNum:    { fontSize: 14.5, ...FONTS.bold, color: colors.text, minWidth: 20, textAlign: 'center' },
   couponRow: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     paddingVertical: 12, borderBottomWidth: 1, borderColor: colors.border,
@@ -297,7 +301,7 @@ const createStyles = (colors, isDark) => StyleSheet.create({
   couponLabel: { fontSize: 15, ...FONTS.medium, color: colors.text },
   couponInput: { flexDirection: 'row', gap: 8, marginTop: 12 },
   couponField: {
-    flex: 1, backgroundColor: colors.creamDark, borderWidth: 1.5, borderColor: colors.border,
+    flex: 1, backgroundColor: colors.creamDark, borderWidth: 1, borderColor: colors.border,
     borderRadius: RADIUS.md, padding: 12, fontSize: 14, color: colors.text, letterSpacing: 1,
   },
   couponApplyBtn: {
@@ -315,7 +319,7 @@ const createStyles = (colors, isDark) => StyleSheet.create({
   paymentPreview: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     backgroundColor: colors.cardBg, borderRadius: RADIUS.lg,
-    padding: 16, borderWidth: 1.5, borderColor: colors.saffron + '40',
+    padding: 16, borderWidth: 1, borderColor: colors.border,
     ...SHADOW.small,
   },
   paymentLeft: {
@@ -324,13 +328,14 @@ const createStyles = (colors, isDark) => StyleSheet.create({
   paymentTitle: { fontSize: 15, ...FONTS.semibold, color: colors.text },
   paymentSub: { fontSize: 12, color: colors.textMuted, marginTop: 2 },
   summaryCard: {
-    backgroundColor: colors.brown, borderRadius: RADIUS.xl,
-    padding: 20, marginTop: 16, ...SHADOW.medium,
+    backgroundColor: colors.cardBg, borderRadius: RADIUS.xl,
+    padding: 20, marginTop: 16, borderWidth: 1, borderColor: colors.borderLight,
+    ...SHADOW.small,
   },
-  summaryRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
+  summaryRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
   summaryLbl: { color: colors.textMuted, fontSize: 14 },
-  summaryVal: { color: colors.textMuted, fontSize: 14 },
-  totalRow: { borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 10, marginTop: 4 },
-  totalLbl:  { color: colors.white, fontSize: 17, ...FONTS.bold },
-  totalVal:  { color: colors.saffronLight, fontSize: 20, ...FONTS.bold },
+  summaryVal: { color: colors.text, fontSize: 14, ...FONTS.medium },
+  totalRow: { borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 12, marginTop: 4 },
+  totalLbl:  { color: colors.text, fontSize: 17, ...FONTS.bold },
+  totalVal:  { color: colors.saffron, fontSize: 21, ...FONTS.bold },
 });

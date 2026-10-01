@@ -85,26 +85,26 @@ export default function Layout({ children }) {
                 display:        'flex',
                 alignItems:     'center',
                 gap:            10,
-                padding:        '9px 12px',
-                borderRadius:   8,
-                marginBottom:   2,
+                padding:        '10px 14px',
+                borderRadius:   10,
+                marginBottom:   3,
                 fontSize:       '0.875rem',
-                fontWeight:     isActive ? 700 : 500,
-                color:          isActive ? 'var(--saffron)' : 'var(--sidebar-text-mut)',
+                fontWeight:     isActive ? 600 : 500,
+                color:          isActive ? 'var(--sidebar-text)' : 'var(--sidebar-text-mut)',
                 background:     isActive ? 'var(--sidebar-hover)' : 'transparent',
-                borderLeft:     isActive ? '3px solid var(--saffron)' : '3px solid transparent',
+                border:         isActive ? '1px solid rgba(255,255,255,0.12)' : '1px solid transparent',
                 textDecoration: 'none',
-                transition:     'var(--transition)',
+                transition:     'all 0.15s cubic-bezier(0.16, 1, 0.3, 1)',
               })}
             >
               {({ isActive }) => (
                 <>
                   <Icon
-                    size={17}
-                    color={isActive ? 'var(--saffron)' : 'var(--sidebar-text-mut)'}
-                    strokeWidth={isActive ? 2.2 : 1.8}
+                    size={18}
+                    color={isActive ? 'var(--saffron-light)' : 'var(--sidebar-text-mut)'}
+                    strokeWidth={isActive ? 2 : 1.7}
                   />
-                  {label}
+                  <span>{label}</span>
                 </>
               )}
             </NavLink>
