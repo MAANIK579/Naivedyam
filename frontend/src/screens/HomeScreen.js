@@ -1,80 +1,86 @@
+// src/screens/HomeScreen.js — Modern High-Contrast Food Delivery Home Screen
 import React, { useEffect, useState } from 'react';
 import {
   View, Text, ScrollView, StyleSheet,
-  TouchableOpacity, StatusBar, RefreshControl, Animated, Image,
+  TouchableOpacity, StatusBar, RefreshControl, Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { useTheme } from '../context/ThemeContext';
-import { AmbientGlow, GlassCard } from '../components';
+import { BannerCarousel, VegBadge } from '../components';
 import { FONTS, RADIUS, SHADOW } from '../theme';
 import api from '../api/client';
 
+const QUICK_CATS = [
+  { id: 'all',       label: 'All',       emoji: '🍽️' },
+  { id: 'thali',     label: 'Thali',     emoji: '🍱' },
+  { id: 'dal-sabzi', label: 'Dal Sabzi', emoji: '🥘' },
+  { id: 'roti',      label: 'Breads',    emoji: '🫓' },
+  { id: 'snacks',    label: 'Snacks',    emoji: '🥟' },
+  { id: 'dessert',   label: 'Desserts',  emoji: '🍨' },
+];
+
 export default function HomeScreen({ navigation }) {
   const { user } = useAuth();
+  const { addItem, removeItem, getQty } = useCart();
   const { colors, isDark } = useTheme();
-  const firstName = user?.name?.split(' ')[0] || 'Guest';
+  const firstName = user?.name?.split(' ')[0] || 'Foodie';
   const [refreshing, setRefreshing] = useState(false);
-  const [popularItems, setPopularItems] = useState([
-    { id: '1', name: 'Thali Special', emoji: '🍛', price: 149, tag: 'Bestseller' },
-    { id: '2', name: 'Dal Makhani', emoji: '🥘', price: 89, tag: 'Must Try' },
-    { id: '3', name: 'Butter Roti', emoji: '🫓', price: 15, tag: 'Popular' },
-    { id: '4', name: 'Paneer Curry', emoji: '🧀', price: 129, tag: 'Chef Special' },
-  ]);
-  const scaleAnim = React.useRef(new Animated.Value(1)).current;
+  const [popularItems, setPopularItems] = useState([]);
+  const [selectedCat, setSelectedCat] = useState('all');
 
-  const QUICK_CATS = [
-    { id: 'thali',     label: 'Thali',     icon: 'grid-outline',      emoji: '🍛' },
-    { id: 'dal-sabzi', label: 'Dal Sabzi', icon: 'leaf-outline',      emoji: '🥘' },
-    { id: 'roti',      label: 'Roti',      icon: 'pizza-outline',     emoji: '🫓' },
-    { id: 'nonveg',    label: 'Special',   icon: 'flame-outline',     emoji: '🍲' },
-    { id: 'snacks',    label: 'Snacks',    icon: 'cafe-outline',      emoji: '🥟' },
-    { id: 'dessert',   label: 'Dessert',   icon: 'ice-cream-outline', emoji: '🍨' },
-  ];
+  async function loadData() {
+    try {
+      const data = await api.getMenuItems({ limit: 6, sort: 'popular' });
+      if (data?.items?.length > 0) {
+        setPopularItems(data.items);
+      }
+    } catch (_) {}
+  }
 
   async function onRefresh() {
     setRefreshing(true);
-    try {
-      const data = await api.getMenuItems({ limit: 4, sort: 'popular' });
-      if (data.items?.length > 0) {
-        setPopularItems(data.items.slice(0, 4).map(item => ({
-          id: item._id || item.id,
-          name: item.name,
-          emoji: item.emoji,
-          image_url: item.image_url,
-          price: item.price,
-          tag: item.tags?.[0] || 'Popular',
-        })));
-      }
-    } catch (_) {}
+    await loadData();
     setRefreshing(false);
   }
 
   useEffect(() => {
-    onRefresh();
-  }, []);
-
-  useEffect(() => {
-    const pulse = Animated.loop(
-      Animated.sequence([
-        Animated.timing(scaleAnim, { toValue: 1.025, duration: 1200, useNativeDriver: true }),
-        Animated.timing(scaleAnim, { toValue: 1, duration: 1200, useNativeDriver: true }),
-      ])
-    );
-    pulse.start();
-    return () => pulse.stop();
+    loadData();
   }, []);
 
   const styles = createStyles(colors, isDark);
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle={colors.statusBarStyle} backgroundColor="transparent" translucent />
-      <AmbientGlow />
+      <StatusBar barStyle={colors.statusBarStyle} backgroundColor={colors.cardBg} />
+
+      {/* Top Bar with Location and Notifications */}
+      <View style={styles.topBar}>
+        <View style={styles.locationContainer}>
+          <View style={styles.locationIconWrap}>
+            <Ionicons name="location" size={18} color={colors.saffron} />
+          </View>
+          <View>
+            <View style={styles.locationTitleRow}>
+              <Text style={styles.locationTitle}>Bhiwani, Haryana</Text>
+              <Ionicons name="chevron-down" size={14} color={colors.text} />
+            </View>
+            <Text style={styles.locationSub}>Express Delivery (30-40 min)</Text>
+          </View>
+        </View>
+
+        <TouchableOpacity
+          style={styles.notifBtn}
+          onPress={() => navigation.navigate('Notifications')}
+          activeOpacity={0.8}
+        >
+          <Ionicons name="notifications-outline" size={20} color={colors.text} />
+        </TouchableOpacity>
+      </View>
 
       <ScrollView
-        style={styles.screen}
+        style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         refreshControl={
@@ -86,206 +92,188 @@ export default function HomeScreen({ navigation }) {
           />
         }
       >
-        {/* Glassmorphic Hero Banner */}
-        <View style={styles.heroWrapper}>
-          <GlassCard elevated style={styles.heroGlass}>
-            <View style={styles.heroHeader}>
-              <View style={{ flex: 1 }}>
-                <View style={styles.greetingBadge}>
-                  <Ionicons name="sparkles" size={13} color={colors.turmeric} />
-                  <Text style={styles.greeting}>Namaskar, {firstName}</Text>
-                </View>
-                <Text style={styles.heroTitle}>Ghar Ka Swaad,{'\n'}Seedha Aapke Darwaze</Text>
-              </View>
-              <TouchableOpacity
-                style={styles.notifBtn}
-                onPress={() => navigation.navigate('Notifications')}
-                activeOpacity={0.8}
-              >
-                <Ionicons name="notifications-outline" size={20} color={colors.text} />
-              </TouchableOpacity>
-            </View>
+        {/* Search Bar Shortcut */}
+        <TouchableOpacity
+          style={styles.searchBar}
+          onPress={() => navigation.navigate('Search')}
+          activeOpacity={0.9}
+        >
+          <Ionicons name="search" size={18} color={colors.saffron} />
+          <Text style={styles.searchPlaceholder}>Search "Special Thali, Dal Makhani..."</Text>
+          <View style={styles.searchDivider} />
+          <Ionicons name="options-outline" size={18} color={colors.textLight} />
+        </TouchableOpacity>
 
-            <Text style={styles.heroSub}>Authentic Haryanvi home meals · Bhiwani, Haryana</Text>
+        {/* Promo Carousel */}
+        <BannerCarousel onBannerPress={() => navigation.navigate('Menu')} />
 
-            {/* Frosted Search Bar */}
-            <TouchableOpacity
-              style={styles.searchBar}
-              onPress={() => navigation.navigate('Search')}
-              activeOpacity={0.88}
-            >
-              <View style={styles.searchIconWrap}>
-                <Ionicons name="search-outline" size={16} color={colors.saffron} />
-              </View>
-              <Text style={styles.searchPlaceholder}>Search for thali, dal makhani, roti...</Text>
-              <Ionicons name="options-outline" size={16} color={colors.textLight} />
-            </TouchableOpacity>
-
-            {/* Quick Stats Glass Pills */}
-            <View style={styles.statsRow}>
-              {[
-                { icon: 'time-outline',     val: '30-45', lbl: 'Mins' },
-                { icon: 'star',             val: '4.8★',  lbl: 'Rating' },
-                { icon: 'shield-checkmark', val: '100%',  lbl: 'Pure Veg' },
-              ].map(s => (
-                <View key={s.lbl} style={styles.statPill}>
-                  <Ionicons name={s.icon} size={14} color={colors.saffron} />
-                  <Text style={styles.statNum}>{s.val}</Text>
-                  <Text style={styles.statLbl}>{s.lbl}</Text>
-                </View>
-              ))}
-            </View>
-
-            {/* Order Now Glowing Button */}
-            <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
-              <TouchableOpacity
-                style={styles.orderNowBtn}
-                onPress={() => navigation.navigate('Menu')}
-                activeOpacity={0.85}
-              >
-                <Ionicons name="restaurant" size={18} color="#FFFFFF" />
-                <Text style={styles.orderNowText}>Order Now</Text>
-                <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
-              </TouchableOpacity>
-            </Animated.View>
-          </GlassCard>
+        {/* Categories Bar */}
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Explore Menu</Text>
+          <TouchableOpacity onPress={() => navigation.navigate('Menu')}>
+            <Text style={styles.seeAllText}>See all</Text>
+          </TouchableOpacity>
         </View>
 
-        {/* Content Body */}
-        <View style={styles.body}>
-          {/* Quick Categories */}
-          <View style={styles.sectionHeaderRow}>
-            <Text style={styles.sectionLabel}>What are you craving?</Text>
-            <TouchableOpacity onPress={() => navigation.navigate('Menu')}>
-              <Text style={styles.seeAll}>View all</Text>
-            </TouchableOpacity>
-          </View>
-
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.catsContainer}
-          >
-            {QUICK_CATS.map(cat => (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.categoryScroll}
+        >
+          {QUICK_CATS.map(cat => {
+            const isSelected = selectedCat === cat.id;
+            return (
               <TouchableOpacity
                 key={cat.id}
-                style={styles.catCard}
-                onPress={() => navigation.navigate('Menu', { category: cat.id })}
+                style={[
+                  styles.categoryPill,
+                  isSelected && styles.categoryPillActive,
+                ]}
+                onPress={() => {
+                  setSelectedCat(cat.id);
+                  navigation.navigate('Menu', { category: cat.id === 'all' ? undefined : cat.id });
+                }}
                 activeOpacity={0.8}
               >
-                <View style={styles.catSquircle}>
-                  <Text style={styles.catEmoji}>{cat.emoji}</Text>
-                </View>
-                <Text style={styles.catLabel}>{cat.label}</Text>
+                <Text style={styles.catEmoji}>{cat.emoji}</Text>
+                <Text style={[styles.categoryLabel, isSelected && styles.categoryLabelActive]}>
+                  {cat.label}
+                </Text>
               </TouchableOpacity>
-            ))}
-          </ScrollView>
+            );
+          })}
+        </ScrollView>
 
-          {/* Popular Items Showcase */}
-          <View style={styles.popularSection}>
-            <View style={styles.sectionHeaderRow}>
-              <View>
-                <Text style={styles.sectionLabel}>Popular Right Now</Text>
-                <Text style={styles.sectionSublabel}>Freshly cooked local favorites</Text>
-              </View>
-              <TouchableOpacity onPress={() => navigation.navigate('Menu')}>
-                <Text style={styles.seeAll}>See all</Text>
-              </TouchableOpacity>
-            </View>
+        {/* Popular Dishes Section */}
+        <View style={styles.sectionHeader}>
+          <View>
+            <Text style={styles.sectionTitle}>Most Ordered Dishes</Text>
+            <Text style={styles.sectionSubtitle}>Authentic taste, cooked fresh on order</Text>
+          </View>
+          <TouchableOpacity onPress={() => navigation.navigate('Menu')}>
+            <Text style={styles.seeAllText}>View menu</Text>
+          </TouchableOpacity>
+        </View>
 
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.popularList}
-            >
-              {popularItems.map(item => (
-                <GlassCard
-                  key={item.id}
-                  style={styles.popularCard}
-                  onPress={() => navigation.navigate('Menu')}
-                  padding={0}
-                >
-                  <View style={styles.popularMedia}>
-                    {item.image_url ? (
-                      <Image
-                        source={{ uri: item.image_url }}
-                        style={styles.popularImage}
-                        resizeMode="cover"
-                      />
-                    ) : (
-                      <View style={styles.emojiFallback}>
-                        <Text style={styles.popularEmoji}>{item.emoji}</Text>
-                      </View>
-                    )}
-                    {item.tag && (
-                      <View style={styles.popularTagPill}>
-                        <Text style={styles.popularTagText}>{item.tag}</Text>
-                      </View>
-                    )}
-                  </View>
+        <View style={styles.dishGrid}>
+          {popularItems.map(item => {
+            const itemId = item._id || item.id;
+            const qty = getQty(itemId);
 
-                  <View style={styles.popularContent}>
-                    <Text style={styles.popularName} numberOfLines={1}>{item.name}</Text>
-                    <View style={styles.popularBottomRow}>
-                      <Text style={styles.popularPrice}>₹{item.price}</Text>
-                      <View style={styles.addMiniBtn}>
-                        <Ionicons name="add" size={16} color="#FFFFFF" />
-                      </View>
+            return (
+              <TouchableOpacity
+                key={itemId}
+                style={styles.dishCard}
+                onPress={() => navigation.navigate('Menu')}
+                activeOpacity={0.9}
+              >
+                <View style={styles.dishMediaWrap}>
+                  {item.image_url ? (
+                    <Image
+                      source={{ uri: item.image_url }}
+                      style={styles.dishImage}
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <View style={styles.emojiFallback}>
+                      <Text style={{ fontSize: 50 }}>{item.emoji || '🍛'}</Text>
                     </View>
+                  )}
+
+                  <View style={styles.vegBadgePosition}>
+                    <VegBadge isVeg={item.is_veg === true || item.is_veg === 1} />
                   </View>
-                </GlassCard>
-              ))}
-            </ScrollView>
-          </View>
 
-          {/* Quick Actions Frosted Grid */}
-          <View style={styles.quickActions}>
-            <GlassCard
-              style={styles.quickAction}
-              onPress={() => navigation.navigate('Profile')}
-              padding={12}
-            >
-              <View style={[styles.actionIconWrap, { backgroundColor: isDark ? 'rgba(245,158,11,0.18)' : 'rgba(22,163,74,0.12)' }]}>
-                <Ionicons name="receipt-outline" size={20} color={colors.saffron} />
-              </View>
-              <Text style={styles.quickActionText}>My Orders</Text>
-            </GlassCard>
+                  {item.avg_rating > 0 && (
+                    <View style={styles.ratingBadge}>
+                      <Ionicons name="star" size={11} color="#FFFFFF" />
+                      <Text style={styles.ratingScore}>{item.avg_rating.toFixed(1)}</Text>
+                    </View>
+                  )}
+                </View>
 
-            <GlassCard
-              style={styles.quickAction}
-              onPress={() => navigation.navigate('Favorites')}
-              padding={12}
-            >
-              <View style={[styles.actionIconWrap, { backgroundColor: isDark ? 'rgba(239,68,68,0.18)' : 'rgba(239,68,68,0.12)' }]}>
-                <Ionicons name="heart" size={20} color={colors.error} />
-              </View>
-              <Text style={styles.quickActionText}>Favorites</Text>
-            </GlassCard>
+                <View style={styles.dishBody}>
+                  <Text style={styles.dishName} numberOfLines={1}>{item.name}</Text>
+                  <Text style={styles.dishDesc} numberOfLines={2}>
+                    {item.description || 'Traditional North Indian recipe prepared with fresh ingredients.'}
+                  </Text>
 
-            <GlassCard
-              style={styles.quickAction}
-              onPress={() => navigation.navigate('Coupon')}
-              padding={12}
-            >
-              <View style={[styles.actionIconWrap, { backgroundColor: isDark ? 'rgba(34,197,94,0.18)' : 'rgba(34,197,94,0.12)' }]}>
-                <Ionicons name="pricetag" size={20} color={colors.green} />
-              </View>
-              <Text style={styles.quickActionText}>Coupons</Text>
-            </GlassCard>
-          </View>
+                  <View style={styles.dishBottomRow}>
+                    <Text style={styles.dishPrice}>₹{item.price}</Text>
 
-          {/* Footer Glass Pill */}
-          <GlassCard subtle style={styles.footerCard} padding={16}>
-            <View style={styles.footerRow}>
-              <View style={styles.leafIconBadge}>
-                <Ionicons name="leaf" size={15} color={colors.green} />
-              </View>
-              <Text style={styles.footerText}>
-                Handcrafted with pure desi ghee & fresh local produce.{'\n'}
-                Prepared fresh for every single order in Bhiwani.
-              </Text>
+                    {qty === 0 ? (
+                      <TouchableOpacity
+                        style={styles.addBtn}
+                        onPress={(e) => {
+                          e?.stopPropagation?.();
+                          addItem({ ...item, id: itemId });
+                        }}
+                        activeOpacity={0.8}
+                      >
+                        <Text style={styles.addBtnText}>ADD</Text>
+                        <Ionicons name="add" size={15} color={colors.saffron} />
+                      </TouchableOpacity>
+                    ) : (
+                      <View style={styles.qtyCtrl}>
+                        <TouchableOpacity
+                          style={styles.qtyBtn}
+                          onPress={(e) => {
+                            e?.stopPropagation?.();
+                            removeItem(itemId);
+                          }}
+                        >
+                          <Ionicons name="remove" size={14} color="#FFFFFF" />
+                        </TouchableOpacity>
+                        <Text style={styles.qtyNum}>{qty}</Text>
+                        <TouchableOpacity
+                          style={styles.qtyBtn}
+                          onPress={(e) => {
+                            e?.stopPropagation?.();
+                            addItem({ ...item, id: itemId });
+                          }}
+                        >
+                          <Ionicons name="add" size={14} color="#FFFFFF" />
+                        </TouchableOpacity>
+                      </View>
+                    )}
+                  </View>
+                </View>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
+        {/* Quick Shortcuts */}
+        <View style={styles.shortcutsRow}>
+          <TouchableOpacity
+            style={styles.shortcutCard}
+            onPress={() => navigation.navigate('MainTabs', { screen: 'Track' })}
+            activeOpacity={0.85}
+          >
+            <View style={[styles.shortcutIcon, { backgroundColor: isDark ? '#431407' : '#FFEDD5' }]}>
+              <Ionicons name="bicycle" size={20} color={colors.saffron} />
             </View>
-          </GlassCard>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.shortcutTitle}>Live Tracking</Text>
+              <Text style={styles.shortcutSub}>Check active order status</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color={colors.textLight} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.shortcutCard}
+            onPress={() => navigation.navigate('Coupon')}
+            activeOpacity={0.85}
+          >
+            <View style={[styles.shortcutIcon, { backgroundColor: isDark ? '#052E16' : '#DCFCE7' }]}>
+              <Ionicons name="pricetag" size={20} color={colors.green} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.shortcutTitle}>Offers & Discounts</Text>
+              <Text style={styles.shortcutSub}>Save up to ₹100 on meals</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color={colors.textLight} />
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </View>
@@ -297,211 +285,162 @@ const createStyles = (colors, isDark) => StyleSheet.create({
     flex: 1,
     backgroundColor: colors.cream,
   },
-  screen: {
+  topBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingTop: 48,
+    paddingBottom: 12,
+    backgroundColor: colors.cardBg,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderLight,
+  },
+  locationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    flex: 1,
+  },
+  locationIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.saffronPale,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  locationTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  locationTitle: {
+    fontSize: 15,
+    ...FONTS.heavy,
+    color: colors.text,
+  },
+  locationSub: {
+    fontSize: 12,
+    color: colors.textMuted,
+  },
+  notifBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: colors.creamDark,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  scroll: {
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 40,
-  },
-  heroWrapper: {
-    paddingHorizontal: 16,
-    paddingTop: 54,
-  },
-  heroGlass: {
-    borderRadius: RADIUS.xl,
-    padding: 20,
-    overflow: 'hidden',
-  },
-  heroHeader: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 12,
-  },
-  greetingBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginBottom: 4,
-  },
-  greeting: {
-    color: colors.turmeric,
-    fontSize: 13,
-    ...FONTS.semibold,
-    letterSpacing: 0.5,
-  },
-  heroTitle: {
-    color: colors.text,
-    fontSize: 24,
-    ...FONTS.heavy,
-    lineHeight: 32,
-    letterSpacing: -0.4,
-  },
-  heroSub: {
-    color: colors.textMuted,
-    fontSize: 12.5,
-    marginTop: 6,
-    marginBottom: 16,
-  },
-  notifBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.glass?.pill || (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)'),
-    borderWidth: 1,
-    borderColor: colors.glass?.border || 'rgba(255,255,255,0.12)',
-    alignItems: 'center',
-    justifyContent: 'center',
+    paddingBottom: 36,
   },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.glass?.card || (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.85)'),
-    borderRadius: RADIUS.full,
-    paddingHorizontal: 14,
-    paddingVertical: 11,
-    borderWidth: 1,
-    borderColor: colors.glass?.border || 'rgba(255,255,255,0.12)',
-    borderTopColor: colors.glass?.highlight || 'rgba(255,255,255,0.25)',
+    backgroundColor: colors.cardBg,
+    marginHorizontal: 16,
+    marginTop: 14,
     marginBottom: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: colors.border,
     gap: 10,
-  },
-  searchIconWrap: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: isDark ? 'rgba(245,158,11,0.15)' : 'rgba(22,163,74,0.1)',
-    alignItems: 'center',
-    justifyContent: 'center',
+    ...SHADOW.small,
   },
   searchPlaceholder: {
     flex: 1,
-    color: colors.textLight,
     fontSize: 13.5,
-    ...FONTS.regular,
+    color: colors.textLight,
   },
-  statsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 18,
-    gap: 8,
+  searchDivider: {
+    width: 1,
+    height: 18,
+    backgroundColor: colors.border,
   },
-  statPill: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.glass?.pill || (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.65)'),
-    borderRadius: RADIUS.full,
-    paddingVertical: 7,
-    paddingHorizontal: 10,
-    borderWidth: 1,
-    borderColor: colors.glass?.pillBorder || 'rgba(255,255,255,0.1)',
-    gap: 5,
-  },
-  statNum: {
-    color: colors.text,
-    fontSize: 12,
-    ...FONTS.bold,
-  },
-  statLbl: {
-    color: colors.textMuted,
-    fontSize: 10,
-    ...FONTS.medium,
-  },
-  orderNowBtn: {
-    backgroundColor: colors.saffron,
-    borderRadius: RADIUS.lg,
-    paddingVertical: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    ...SHADOW.glassGlow,
-  },
-  orderNowText: {
-    color: '#FFFFFF',
-    fontSize: 15.5,
-    ...FONTS.bold,
-    letterSpacing: 0.3,
-  },
-  body: {
-    paddingHorizontal: 16,
-    paddingTop: 24,
-  },
-  sectionHeaderRow: {
+  sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-end',
-    marginBottom: 14,
+    paddingHorizontal: 16,
+    marginTop: 18,
+    marginBottom: 12,
   },
-  sectionLabel: {
-    fontSize: 18,
-    ...FONTS.bold,
+  sectionTitle: {
+    fontSize: 17,
+    ...FONTS.heavy,
     color: colors.text,
     letterSpacing: -0.3,
   },
-  sectionSublabel: {
+  sectionSubtitle: {
     fontSize: 12,
     color: colors.textMuted,
     marginTop: 2,
   },
-  seeAll: {
-    fontSize: 13.5,
-    ...FONTS.semibold,
+  seeAllText: {
+    fontSize: 13,
+    ...FONTS.bold,
     color: colors.saffron,
   },
-  catsContainer: {
-    paddingRight: 16,
-    gap: 14,
-    paddingBottom: 22,
+  categoryScroll: {
+    paddingHorizontal: 16,
+    gap: 10,
+    paddingBottom: 4,
   },
-  catCard: {
+  categoryPill: {
+    flexDirection: 'row',
     alignItems: 'center',
-    width: 66,
-  },
-  catSquircle: {
-    width: 58,
-    height: 58,
-    borderRadius: 18,
-    backgroundColor: colors.glass?.card || (isDark ? 'rgba(255,255,255,0.07)' : 'rgba(255,255,255,0.85)'),
+    backgroundColor: colors.cardBg,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: RADIUS.full,
     borderWidth: 1,
-    borderColor: colors.glass?.border || 'rgba(255,255,255,0.12)',
-    borderTopColor: colors.glass?.highlight || 'rgba(255,255,255,0.25)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 7,
-    ...SHADOW.small,
+    borderColor: colors.border,
+    gap: 6,
+  },
+  categoryPillActive: {
+    backgroundColor: colors.saffronPale,
+    borderColor: colors.saffron,
   },
   catEmoji: {
-    fontSize: 26,
+    fontSize: 15,
   },
-  catLabel: {
-    fontSize: 11.5,
+  categoryLabel: {
+    fontSize: 13,
     ...FONTS.semibold,
     color: colors.text,
-    textAlign: 'center',
   },
-  popularSection: {
-    marginBottom: 24,
+  categoryLabelActive: {
+    color: colors.saffron,
+    ...FONTS.bold,
   },
-  popularList: {
-    paddingVertical: 6,
-    paddingRight: 16,
+  dishGrid: {
+    paddingHorizontal: 16,
     gap: 14,
   },
-  popularCard: {
-    width: 172,
+  dishCard: {
+    flexDirection: 'row',
+    backgroundColor: colors.cardBg,
     borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
     overflow: 'hidden',
+    ...SHADOW.small,
   },
-  popularMedia: {
-    width: '100%',
-    height: 116,
-    backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : '#F1F5F9',
+  dishMediaWrap: {
+    width: 120,
+    height: 125,
     position: 'relative',
-    overflow: 'hidden',
+    backgroundColor: colors.creamDark,
   },
-  popularImage: {
+  dishImage: {
     width: '100%',
     height: '100%',
   },
@@ -511,101 +450,124 @@ const createStyles = (colors, isDark) => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  popularEmoji: {
-    fontSize: 44,
-  },
-  popularTagPill: {
+  vegBadgePosition: {
     position: 'absolute',
     top: 8,
     left: 8,
-    backgroundColor: colors.saffron,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: RADIUS.full,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.3)',
   },
-  popularTagText: {
-    fontSize: 9,
+  ratingBadge: {
+    position: 'absolute',
+    bottom: 8,
+    left: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#15803D',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    gap: 3,
+  },
+  ratingScore: {
+    fontSize: 11,
     ...FONTS.bold,
     color: '#FFFFFF',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
   },
-  popularContent: {
+  dishBody: {
+    flex: 1,
     padding: 12,
+    justifyContent: 'space-between',
   },
-  popularName: {
-    fontSize: 14,
-    ...FONTS.semibold,
+  dishName: {
+    fontSize: 15,
+    ...FONTS.bold,
     color: colors.text,
-    letterSpacing: -0.2,
   },
-  popularBottomRow: {
+  dishDesc: {
+    fontSize: 12,
+    color: colors.textMuted,
+    lineHeight: 16,
+    marginVertical: 4,
+  },
+  dishBottomRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: 4,
   },
-  popularPrice: {
+  dishPrice: {
     fontSize: 16,
-    ...FONTS.bold,
-    color: colors.saffron,
+    ...FONTS.heavy,
+    color: colors.text,
   },
-  addMiniBtn: {
-    width: 26,
-    height: 26,
-    borderRadius: 8,
-    backgroundColor: colors.saffron,
+  addBtn: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: colors.cardBg,
+    borderColor: colors.saffron,
+    borderWidth: 1.5,
+    borderRadius: RADIUS.md,
+    paddingHorizontal: 14,
+    paddingVertical: 5,
+    gap: 4,
     ...SHADOW.small,
   },
-  quickActions: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 24,
+  addBtnText: {
+    fontSize: 12.5,
+    ...FONTS.heavy,
+    color: colors.saffron,
   },
-  quickAction: {
-    flex: 1,
+  qtyCtrl: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.saffron,
+    borderRadius: RADIUS.md,
+    paddingHorizontal: 4,
+    paddingVertical: 3,
+  },
+  qtyBtn: {
+    width: 24,
+    height: 24,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: RADIUS.lg,
-    gap: 8,
   },
-  actionIconWrap: {
+  qtyNum: {
+    fontSize: 13,
+    ...FONTS.heavy,
+    color: '#FFFFFF',
+    minWidth: 22,
+    textAlign: 'center',
+  },
+  shortcutsRow: {
+    paddingHorizontal: 16,
+    marginTop: 20,
+    gap: 10,
+  },
+  shortcutCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.cardBg,
+    borderRadius: RADIUS.lg,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: colors.border,
+    gap: 12,
+    ...SHADOW.small,
+  },
+  shortcutIcon: {
     width: 40,
     height: 40,
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  quickActionText: {
-    fontSize: 12,
-    ...FONTS.semibold,
+  shortcutTitle: {
+    fontSize: 14,
+    ...FONTS.bold,
     color: colors.text,
-    textAlign: 'center',
   },
-  footerCard: {
-    borderRadius: RADIUS.xl,
-  },
-  footerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  leafIconBadge: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: isDark ? 'rgba(34,197,94,0.18)' : 'rgba(22,163,74,0.12)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  footerText: {
-    flex: 1,
+  shortcutSub: {
+    fontSize: 12,
     color: colors.textMuted,
-    fontSize: 11.5,
-    lineHeight: 17,
+    marginTop: 1,
   },
 });

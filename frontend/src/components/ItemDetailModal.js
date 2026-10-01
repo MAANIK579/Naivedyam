@@ -1,3 +1,4 @@
+// src/components/ItemDetailModal.js — Clean, Modern Food Detail Sheet
 import React, { useEffect, useState } from 'react';
 import {
   View, Text, StyleSheet, Modal, TouchableOpacity,
@@ -8,28 +9,9 @@ import { useTheme } from '../context/ThemeContext';
 import { FONTS, RADIUS, SHADOW } from '../theme';
 import HeartButton from './HeartButton';
 import StarRating from './StarRating';
-import GlassCard from './GlassCard';
+import { VegBadge } from './index';
 import { useCart } from '../context/CartContext';
 import api from '../api/client';
-
-function VegBadge({ isVeg }) {
-  const { colors } = useTheme();
-  const color = isVeg ? colors.green : colors.error;
-  return (
-    <View style={{
-      width: 18,
-      height: 18,
-      borderWidth: 1.5,
-      borderRadius: 4,
-      borderColor: color,
-      backgroundColor: 'rgba(0,0,0,0.5)',
-      alignItems: 'center',
-      justifyContent: 'center',
-    }}>
-      <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: color }} />
-    </View>
-  );
-}
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -55,7 +37,7 @@ export default function ItemDetailModal({ visible, onClose, item, navigation }) 
     } else {
       Animated.timing(slideAnim, {
         toValue: SCREEN_HEIGHT,
-        duration: 250,
+        duration: 220,
         useNativeDriver: true,
       }).start();
     }
@@ -66,7 +48,7 @@ export default function ItemDetailModal({ visible, onClose, item, navigation }) 
     setLoadingReviews(true);
     try {
       const data = await api.getItemReviews(itemId, 1);
-      setReviews(data.reviews?.slice(0, 8) || []);
+      setReviews(data?.reviews?.slice(0, 6) || []);
     } catch (_) {}
     setLoadingReviews(false);
   }
@@ -74,7 +56,7 @@ export default function ItemDetailModal({ visible, onClose, item, navigation }) 
   function handleClose() {
     Animated.timing(slideAnim, {
       toValue: SCREEN_HEIGHT,
-      duration: 250,
+      duration: 220,
       useNativeDriver: true,
     }).start(() => onClose());
   }
@@ -99,13 +81,13 @@ export default function ItemDetailModal({ visible, onClose, item, navigation }) 
             { transform: [{ translateY: slideAnim }] },
           ]}
         >
-          {/* Frosted Handle */}
+          {/* Header Drag Handle */}
           <View style={styles.handleBarWrap}>
             <View style={styles.handleBar} />
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
-            {/* Header / Media */}
+            {/* Dish Photo or Fallback */}
             <View style={styles.heroMedia}>
               {item.image_url ? (
                 <Image
@@ -115,11 +97,11 @@ export default function ItemDetailModal({ visible, onClose, item, navigation }) 
                 />
               ) : (
                 <View style={styles.emojiFallback}>
-                  <Text style={styles.emoji}>{item.emoji || '🍛'}</Text>
+                  <Text style={{ fontSize: 72 }}>{item.emoji || '🍛'}</Text>
                 </View>
               )}
 
-              {/* Floating Circular Glass Buttons */}
+              {/* Close Button */}
               <TouchableOpacity
                 style={styles.closeBtn}
                 onPress={handleClose}
@@ -128,146 +110,124 @@ export default function ItemDetailModal({ visible, onClose, item, navigation }) 
                 <Ionicons name="close" size={20} color="#FFFFFF" />
               </TouchableOpacity>
 
-              <View style={styles.floatingTopRight}>
-                <VegBadge isVeg={item.is_veg === true || item.is_veg === 1} />
-                <View style={styles.heartBtnWrap}>
-                  <HeartButton itemId={itemId} size={20} />
-                </View>
+              {/* Heart Button */}
+              <View style={styles.heartBtnWrap}>
+                <HeartButton itemId={itemId} size={20} />
               </View>
             </View>
 
             <View style={styles.content}>
               <View style={styles.titleRow}>
-                <Text style={styles.name}>{item.name}</Text>
-                <Text style={styles.price}>₹{item.price}</Text>
+                <View style={{ flex: 1 }}>
+                  <View style={styles.vegBadgeRow}>
+                    <VegBadge isVeg={item.is_veg === true || item.is_veg === 1} />
+                    <Text style={styles.vegLabelText}>
+                      {item.is_veg === true || item.is_veg === 1 ? 'Pure Vegetarian' : 'Non-Vegetarian'}
+                    </Text>
+                  </View>
+                  <Text style={styles.dishName}>{item.name}</Text>
+                </View>
+                <Text style={styles.dishPrice}>₹{item.price}</Text>
               </View>
 
-              {/* Glass Metadata Pills */}
-              <View style={styles.chipsRow}>
+              {/* Info Badges */}
+              <View style={styles.badgesRow}>
                 {item.avg_rating > 0 && (
-                  <View style={styles.chip}>
-                    <Ionicons name="star" size={13} color={colors.turmeric} />
-                    <Text style={styles.chipText}>{item.avg_rating.toFixed(1)}</Text>
-                    <Text style={styles.chipSubText}>({item.rating_count || 1})</Text>
+                  <View style={styles.badgePill}>
+                    <Ionicons name="star" size={13} color="#FBBF24" />
+                    <Text style={styles.badgeText}>{item.avg_rating.toFixed(1)}</Text>
+                    <Text style={styles.badgeSubText}>({item.rating_count || 1})</Text>
                   </View>
                 )}
 
-                <View style={styles.chip}>
-                  <Ionicons name="time-outline" size={14} color={colors.saffron} />
-                  <Text style={styles.chipText}>25-35 mins</Text>
+                <View style={styles.badgePill}>
+                  <Ionicons name="timer-outline" size={14} color={colors.saffron} />
+                  <Text style={styles.badgeText}>25-35 mins</Text>
                 </View>
 
-                <View style={styles.chip}>
+                <View style={styles.badgePill}>
                   <Ionicons name="flame-outline" size={14} color={colors.error} />
-                  <Text style={styles.chipText}>{item.spice_level || 'Medium'} Spice</Text>
+                  <Text style={styles.badgeText}>{item.spice_level || 'Medium'} Spice</Text>
                 </View>
-
-                {item.cuisine_type && (
-                  <View style={styles.chip}>
-                    <Ionicons name="restaurant-outline" size={13} color={colors.green} />
-                    <Text style={styles.chipText}>{item.cuisine_type}</Text>
-                  </View>
-                )}
               </View>
 
               {/* Description */}
-              <View style={styles.descCard}>
-                <Text style={styles.sectionLabel}>About this Dish</Text>
+              <View style={styles.descSection}>
+                <Text style={styles.sectionHeader}>About This Dish</Text>
                 <Text style={styles.description}>
-                  {item.description || 'Delicious homemade preparation with authentic Haryanvi flavors. Made fresh daily with pure desi ghee and hand-ground spices.'}
+                  {item.description || 'Prepared fresh with pure desi ghee and hand-ground spices in our Bhiwani kitchen.'}
                 </Text>
               </View>
 
-              {/* Tags */}
-              {item.tags && item.tags.length > 0 && (
-                <View style={styles.tagsContainer}>
-                  {item.tags.map((tag, i) => (
-                    <View key={i} style={styles.tagPill}>
-                      <Text style={styles.tagText}>#{tag}</Text>
+              {/* Customer Reviews */}
+              {reviews.length > 0 && (
+                <View style={styles.reviewsSection}>
+                  <Text style={styles.sectionHeader}>Customer Reviews</Text>
+                  {reviews.map((review, i) => (
+                    <View key={i} style={styles.reviewCard}>
+                      <View style={styles.reviewHeader}>
+                        <View style={styles.avatarWrap}>
+                          <Text style={styles.avatarInitial}>
+                            {(review.user?.name?.[0] || 'U').toUpperCase()}
+                          </Text>
+                        </View>
+                        <View style={{ flex: 1, marginLeft: 8 }}>
+                          <Text style={styles.reviewerName}>{review.user?.name || 'Customer'}</Text>
+                          <StarRating rating={review.rating} size={11} />
+                        </View>
+                      </View>
+                      {review.comment ? (
+                        <Text style={styles.reviewText}>"{review.comment}"</Text>
+                      ) : null}
                     </View>
                   ))}
                 </View>
               )}
 
-              {/* Customer Reviews */}
-              {reviews.length > 0 && (
-                <View style={styles.reviewsSection}>
-                  <View style={styles.reviewsHeader}>
-                    <Text style={styles.sectionLabel}>Customer Reviews</Text>
-                    <Text style={styles.reviewsCount}>{reviews.length} feedback</Text>
-                  </View>
-
-                  {reviews.map((review, i) => (
-                    <GlassCard key={i} style={styles.reviewCard} padding={12} subtle>
-                      <View style={styles.reviewHeader}>
-                        <View style={styles.reviewerInfo}>
-                          <View style={styles.avatarRing}>
-                            <Text style={styles.avatarLetter}>
-                              {review.user?.name?.[0] || 'U'}
-                            </Text>
-                          </View>
-                          <Text style={styles.reviewerName}>
-                            {review.user?.name || 'Happy Customer'}
-                          </Text>
-                        </View>
-                        <StarRating rating={review.rating} size={11} />
-                      </View>
-                      {review.comment ? (
-                        <Text style={styles.reviewComment} numberOfLines={3}>
-                          "{review.comment}"
-                        </Text>
-                      ) : null}
-                    </GlassCard>
-                  ))}
-                </View>
-              )}
-
               {loadingReviews && (
-                <ActivityIndicator size="small" color={colors.saffron} style={{ marginVertical: 16 }} />
+                <ActivityIndicator size="small" color={colors.saffron} style={{ marginVertical: 14 }} />
               )}
             </View>
           </ScrollView>
 
-          {/* Frosted Action Footer */}
+          {/* Bottom Action Footer */}
           <View style={styles.footer}>
             {qty === 0 ? (
               <TouchableOpacity
-                style={styles.addButton}
+                style={styles.addBtn}
                 onPress={() => addItem({ ...item, id: itemId })}
                 activeOpacity={0.88}
               >
-                <Ionicons name="bag-add-outline" size={20} color="#FFFFFF" />
-                <Text style={styles.addButtonText}>Add to Cart · ₹{item.price}</Text>
+                <Ionicons name="cart-outline" size={20} color="#FFFFFF" />
+                <Text style={styles.addBtnText}>Add Item to Cart · ₹{item.price}</Text>
               </TouchableOpacity>
             ) : (
               <View style={styles.qtyFooter}>
-                <View style={styles.qtyControls}>
+                <View style={styles.qtyStepper}>
                   <TouchableOpacity
-                    style={styles.qtyBtn}
+                    style={styles.stepperBtn}
                     onPress={() => removeItem(itemId)}
-                    activeOpacity={0.7}
                   >
                     <Ionicons name="remove" size={18} color={colors.text} />
                   </TouchableOpacity>
-                  <Text style={styles.qtyText}>{qty}</Text>
+                  <Text style={styles.stepperQty}>{qty}</Text>
                   <TouchableOpacity
-                    style={[styles.qtyBtn, styles.qtyBtnAdd]}
+                    style={[styles.stepperBtn, styles.stepperBtnAdd]}
                     onPress={() => addItem({ ...item, id: itemId })}
-                    activeOpacity={0.7}
                   >
                     <Ionicons name="add" size={18} color="#FFFFFF" />
                   </TouchableOpacity>
                 </View>
 
                 <TouchableOpacity
-                  style={styles.viewCartBtn}
+                  style={styles.checkoutBtn}
                   onPress={() => {
                     handleClose();
                     navigation?.navigate('Cart');
                   }}
                   activeOpacity={0.88}
                 >
-                  <Text style={styles.viewCartText}>View Cart · ₹{item.price * qty}</Text>
+                  <Text style={styles.checkoutBtnText}>View Cart · ₹{item.price * qty}</Text>
                   <Ionicons name="arrow-forward" size={17} color="#FFFFFF" />
                 </TouchableOpacity>
               </View>
@@ -289,12 +249,9 @@ const createStyles = (colors, isDark) => StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.65)',
   },
   sheet: {
-    backgroundColor: isDark ? 'rgba(18,17,20,0.96)' : 'rgba(255,255,255,0.97)',
-    borderTopLeftRadius: RADIUS.xxl,
-    borderTopRightRadius: RADIUS.xxl,
-    borderWidth: 1,
-    borderColor: colors.glass?.border || (isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.06)'),
-    borderTopColor: colors.glass?.highlight || (isDark ? 'rgba(255,255,255,0.3)' : '#FFFFFF'),
+    backgroundColor: colors.cardBg,
+    borderTopLeftRadius: RADIUS.xl,
+    borderTopRightRadius: RADIUS.xl,
     maxHeight: SCREEN_HEIGHT * 0.88,
     ...SHADOW.large,
   },
@@ -303,17 +260,16 @@ const createStyles = (colors, isDark) => StyleSheet.create({
     paddingVertical: 10,
   },
   handleBar: {
-    width: 44,
-    height: 4.5,
-    borderRadius: 3,
-    backgroundColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.15)',
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: colors.borderLight,
   },
   heroMedia: {
     width: '100%',
     height: 220,
-    backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : '#F1F5F9',
+    backgroundColor: colors.creamDark,
     position: 'relative',
-    overflow: 'hidden',
   },
   heroImage: {
     width: '100%',
@@ -325,255 +281,208 @@ const createStyles = (colors, isDark) => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  emoji: {
-    fontSize: 64,
-  },
   closeBtn: {
     position: 'absolute',
-    top: 12,
+    top: 14,
     left: 14,
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: 'rgba(0,0,0,0.55)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  floatingTopRight: {
-    position: 'absolute',
-    top: 12,
-    right: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
   heartBtnWrap: {
+    position: 'absolute',
+    top: 14,
+    right: 14,
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: 'rgba(0,0,0,0.55)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   content: {
     padding: 20,
-    paddingTop: 16,
   },
   titleRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    gap: 12,
     marginBottom: 12,
   },
-  name: {
-    flex: 1,
-    fontSize: 21,
+  vegBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 4,
+  },
+  vegLabelText: {
+    fontSize: 12,
+    ...FONTS.semibold,
+    color: colors.textMuted,
+  },
+  dishName: {
+    fontSize: 20,
     ...FONTS.heavy,
     color: colors.text,
-    letterSpacing: -0.3,
   },
-  price: {
+  dishPrice: {
     fontSize: 22,
     ...FONTS.heavy,
     color: colors.saffron,
-    letterSpacing: -0.4,
+    marginLeft: 12,
   },
-  chipsRow: {
+  badgesRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
     gap: 8,
     marginBottom: 16,
   },
-  chip: {
+  badgePill: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 5.5,
-    borderRadius: RADIUS.full,
-    backgroundColor: colors.glass?.pill || (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'),
+    backgroundColor: colors.creamDark,
     borderWidth: 1,
-    borderColor: colors.glass?.pillBorder || 'rgba(255,255,255,0.1)',
-    gap: 5,
+    borderColor: colors.border,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: RADIUS.full,
+    gap: 4,
   },
-  chipText: {
+  badgeText: {
     fontSize: 12,
-    ...FONTS.semibold,
+    ...FONTS.bold,
     color: colors.text,
   },
-  chipSubText: {
+  badgeSubText: {
     fontSize: 11,
     color: colors.textMuted,
   },
-  descCard: {
-    paddingVertical: 12,
+  descSection: {
     borderTopWidth: 1,
-    borderTopColor: colors.glass?.borderSubtle || (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'),
-    marginBottom: 12,
+    borderTopColor: colors.border,
+    paddingTop: 14,
+    marginBottom: 16,
   },
-  sectionLabel: {
-    fontSize: 15,
+  sectionHeader: {
+    fontSize: 14,
     ...FONTS.bold,
     color: colors.text,
     marginBottom: 6,
-    letterSpacing: -0.2,
   },
   description: {
     fontSize: 13.5,
     color: colors.textMuted,
     lineHeight: 20,
   },
-  tagsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 16,
-  },
-  tagPill: {
-    backgroundColor: isDark ? 'rgba(245,158,11,0.12)' : 'rgba(22,163,74,0.1)',
-    borderRadius: RADIUS.full,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderWidth: 1,
-    borderColor: isDark ? 'rgba(245,158,11,0.25)' : 'rgba(22,163,74,0.2)',
-  },
-  tagText: {
-    fontSize: 11.5,
-    ...FONTS.semibold,
-    color: colors.saffron,
-  },
   reviewsSection: {
-    marginTop: 8,
-    paddingTop: 16,
     borderTopWidth: 1,
-    borderTopColor: colors.glass?.borderSubtle || (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'),
-  },
-  reviewsHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  reviewsCount: {
-    fontSize: 12,
-    ...FONTS.medium,
-    color: colors.textMuted,
+    borderTopColor: colors.border,
+    paddingTop: 14,
   },
   reviewCard: {
+    backgroundColor: colors.creamDark,
     borderRadius: RADIUS.md,
+    padding: 12,
     marginBottom: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   reviewHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: 6,
   },
-  reviewerInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  avatarRing: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: isDark ? 'rgba(245,158,11,0.2)' : 'rgba(22,163,74,0.15)',
+  avatarWrap: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: colors.saffronPale,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarLetter: {
-    fontSize: 11,
-    ...FONTS.bold,
+  avatarInitial: {
+    fontSize: 12,
+    ...FONTS.heavy,
     color: colors.saffron,
   },
   reviewerName: {
-    fontSize: 12.5,
-    ...FONTS.semibold,
+    fontSize: 13,
+    ...FONTS.bold,
     color: colors.text,
   },
-  reviewComment: {
-    fontSize: 12,
+  reviewText: {
+    fontSize: 12.5,
     color: colors.textMuted,
     lineHeight: 17,
-    marginTop: 2,
-    fontStyle: 'italic',
   },
   footer: {
     padding: 16,
     paddingBottom: 24,
-    backgroundColor: isDark ? 'rgba(18,17,20,0.95)' : 'rgba(255,255,255,0.95)',
+    backgroundColor: colors.cardBg,
     borderTopWidth: 1,
-    borderTopColor: colors.glass?.border || (isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.06)'),
+    borderTopColor: colors.border,
   },
-  addButton: {
+  addBtn: {
     backgroundColor: colors.saffron,
     borderRadius: RADIUS.lg,
     paddingVertical: 14,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.25)',
-    ...SHADOW.glassGlow,
+    gap: 8,
+    ...SHADOW.medium,
   },
-  addButtonText: {
+  addBtnText: {
     color: '#FFFFFF',
     fontSize: 15.5,
-    ...FONTS.bold,
+    ...FONTS.heavy,
   },
   qtyFooter: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
   },
-  qtyControls: {
+  qtyStepper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.glass?.card || (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)'),
-    borderRadius: RADIUS.lg,
+    backgroundColor: colors.creamDark,
+    borderRadius: RADIUS.md,
     padding: 4,
     borderWidth: 1,
-    borderColor: colors.glass?.border || 'rgba(255,255,255,0.14)',
+    borderColor: colors.border,
   },
-  qtyBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: RADIUS.md,
-    backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : '#FFFFFF',
+  stepperBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: RADIUS.sm,
+    backgroundColor: colors.cardBg,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  qtyBtnAdd: {
+  stepperBtnAdd: {
     backgroundColor: colors.saffron,
   },
-  qtyText: {
-    fontSize: 16,
-    ...FONTS.bold,
+  stepperQty: {
+    fontSize: 15,
+    ...FONTS.heavy,
     color: colors.text,
     minWidth: 32,
     textAlign: 'center',
   },
-  viewCartBtn: {
+  checkoutBtn: {
     flex: 1,
     backgroundColor: colors.saffron,
-    borderRadius: RADIUS.lg,
+    borderRadius: RADIUS.md,
     paddingVertical: 13,
-    paddingHorizontal: 16,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.25)',
-    ...SHADOW.glassGlow,
+    ...SHADOW.medium,
   },
-  viewCartText: {
+  checkoutBtnText: {
     color: '#FFFFFF',
     fontSize: 14.5,
     ...FONTS.bold,

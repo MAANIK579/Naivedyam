@@ -1,4 +1,4 @@
-// src/screens/ProfileScreen.js — Glassmorphic Profile & Account Management
+// src/screens/ProfileScreen.js — Clean, Modern Profile & Account Screen
 import React, { useEffect, useState, useCallback } from 'react';
 import {
   View, Text, ScrollView, StyleSheet,
@@ -8,7 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { api } from '../api/client';
-import { Button, Input, GlassCard, AmbientGlow } from '../components';
+import { Button, Input } from '../components';
 import { FONTS, RADIUS, SHADOW } from '../theme';
 
 export default function ProfileScreen({ navigation }) {
@@ -51,9 +51,9 @@ export default function ProfileScreen({ navigation }) {
   }
 
   function handleLogout() {
-    Alert.alert('Logout', 'Are you sure you want to sign out?', [
+    Alert.alert('Log Out', 'Are you sure you want to sign out?', [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Logout', style: 'destructive', onPress: logout },
+      { text: 'Log Out', style: 'destructive', onPress: logout },
     ]);
   }
 
@@ -72,8 +72,6 @@ export default function ProfileScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <AmbientGlow />
-
       <ScrollView
         style={styles.screen}
         contentContainerStyle={styles.scrollContent}
@@ -82,123 +80,116 @@ export default function ProfileScreen({ navigation }) {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[colors.saffron]} tintColor={colors.saffron} />
         }
       >
-        {/* Profile Card Hero */}
-        <GlassCard elevated style={styles.heroCard} padding={20}>
-          <View style={styles.heroRow}>
-            <View style={styles.avatarWrap}>
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>{initials}</Text>
-              </View>
-            </View>
-
-            <View style={{ flex: 1 }}>
-              <Text style={styles.userName}>{user?.name}</Text>
-              <View style={styles.phoneRow}>
-                <Ionicons name="call-outline" size={12} color={colors.textLight} />
-                <Text style={styles.userPhone}>{user?.phone}</Text>
-              </View>
-            </View>
-
-            <TouchableOpacity
-              onPress={() => setEditing(e => !e)}
-              style={styles.editBtn}
-              activeOpacity={0.8}
-            >
-              <Ionicons name={editing ? 'close' : 'create-outline'} size={15} color={colors.text} />
-              <Text style={styles.editBtnTxt}>{editing ? 'Cancel' : 'Edit'}</Text>
-            </TouchableOpacity>
-          </View>
-        </GlassCard>
-
-        <View style={styles.body}>
-          {editing && (
-            <GlassCard style={{ marginBottom: 16 }} padding={16}>
-              <Text style={styles.sectionTitle}>Edit Profile</Text>
-              <Input
-                label="Full Name"
-                leftIcon="person-outline"
-                value={name}
-                onChangeText={setName}
-                placeholder="Enter your name"
-              />
-              <Button
-                title="Save Changes"
-                icon="checkmark-outline"
-                onPress={handleSave}
-                loading={saving}
-              />
-            </GlassCard>
-          )}
-
-          {/* Theme Toggle Glass Card */}
-          <GlassCard style={styles.themeToggleCard} padding={14}>
-            <View style={styles.themeToggleRow}>
-              <View style={[styles.themeIconWrap, { backgroundColor: isDark ? 'rgba(245,158,11,0.18)' : 'rgba(22,163,74,0.12)' }]}>
-                <Ionicons name={isDark ? 'moon' : 'sunny'} size={18} color={colors.saffron} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.themeToggleLabel}>Appearance</Text>
-                <Text style={styles.themeToggleSub}>
-                  {isDark ? 'Dark Obsidian Mode' : 'Light Pearl Mode'}
-                </Text>
-              </View>
-              <Switch
-                value={isDark}
-                onValueChange={toggleTheme}
-                trackColor={{ false: colors.border, true: colors.saffronPale }}
-                thumbColor={isDark ? colors.saffron : colors.saffronLight}
-              />
-            </View>
-          </GlassCard>
-
-          {/* Order Stats */}
-          <View style={styles.statsRow}>
-            {[
-              { icon: 'bag-check-outline',       val: orders.length,                                      lbl: 'Orders',    color: colors.saffron },
-              { icon: 'checkmark-done-circle-outline', val: orders.filter(o => o.status === 'delivered').length, lbl: 'Delivered', color: colors.green },
-              { icon: 'close-circle-outline',     val: orders.filter(o => o.status === 'cancelled').length, lbl: 'Cancelled', color: colors.error },
-            ].map(({ icon, val, lbl, color }) => (
-              <GlassCard key={lbl} style={styles.statCard} padding={14}>
-                <Ionicons name={icon} size={22} color={color} />
-                <Text style={styles.statNum}>{val}</Text>
-                <Text style={styles.statLbl}>{lbl}</Text>
-              </GlassCard>
-            ))}
+        {/* Profile Card Header */}
+        <View style={styles.userCard}>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>{initials}</Text>
           </View>
 
-          {/* Quick Links Menu */}
-          <GlassCard style={styles.quickLinksCard} padding={0}>
-            {QUICK_LINKS.map(({ icon, label, screen, color }, idx) => {
-              const isLast = idx === QUICK_LINKS.length - 1;
-              return (
-                <TouchableOpacity
-                  key={screen}
-                  style={[styles.quickLink, !isLast && styles.quickLinkBorder]}
-                  onPress={() => navigation.navigate(screen)}
-                  activeOpacity={0.75}
-                >
-                  <View style={[styles.quickLinkIcon, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.03)' }]}>
-                    <Ionicons name={icon} size={18} color={color} />
-                  </View>
-                  <Text style={styles.quickLinkLabel}>{label}</Text>
-                  <Ionicons name="chevron-forward" size={16} color={colors.textLight} />
-                </TouchableOpacity>
-              );
-            })}
-          </GlassCard>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.userName}>{user?.name}</Text>
+            <View style={styles.phoneRow}>
+              <Ionicons name="call-outline" size={13} color={colors.textMuted} />
+              <Text style={styles.userPhone}>{user?.phone}</Text>
+            </View>
+          </View>
 
-          {/* Logout Button */}
-          <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} activeOpacity={0.88}>
-            <View style={styles.logoutIconWrap}>
-              <Ionicons name="log-out-outline" size={18} color={colors.error} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.logoutTitle}>Sign Out</Text>
-              <Text style={styles.logoutSub}>Log out of your account on this device</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={16} color={colors.textLight} />
+          <TouchableOpacity
+            onPress={() => setEditing(e => !e)}
+            style={styles.editBtn}
+            activeOpacity={0.8}
+          >
+            <Ionicons name={editing ? 'close' : 'create-outline'} size={15} color={colors.text} />
+            <Text style={styles.editBtnText}>{editing ? 'Cancel' : 'Edit'}</Text>
           </TouchableOpacity>
         </View>
+
+        {editing && (
+          <View style={styles.editBox}>
+            <Text style={styles.sectionHeader}>Edit Profile</Text>
+            <Input
+              label="Full Name"
+              leftIcon="person-outline"
+              value={name}
+              onChangeText={setName}
+              placeholder="Your name"
+            />
+            <Button
+              title="Save Changes"
+              icon="checkmark-outline"
+              onPress={handleSave}
+              loading={saving}
+            />
+          </View>
+        )}
+
+        {/* Order Stats */}
+        <View style={styles.statsRow}>
+          <View style={styles.statBox}>
+            <Text style={styles.statNum}>{orders.length}</Text>
+            <Text style={styles.statLabel}>Total Orders</Text>
+          </View>
+          <View style={styles.statBox}>
+            <Text style={[styles.statNum, { color: colors.green }]}>
+              {orders.filter(o => o.status === 'delivered').length}
+            </Text>
+            <Text style={styles.statLabel}>Delivered</Text>
+          </View>
+          <View style={styles.statBox}>
+            <Text style={[styles.statNum, { color: colors.saffron }]}>
+              {orders.filter(o => ['placed', 'confirmed', 'preparing', 'out_for_delivery'].includes(o.status)).length}
+            </Text>
+            <Text style={styles.statLabel}>Active</Text>
+          </View>
+        </View>
+
+        {/* Theme Mode Toggle */}
+        <View style={styles.card}>
+          <View style={styles.themeRow}>
+            <View style={styles.themeLeft}>
+              <Ionicons name={isDark ? 'moon' : 'sunny'} size={20} color={colors.saffron} />
+              <View>
+                <Text style={styles.themeTitle}>Dark Mode</Text>
+                <Text style={styles.themeSub}>
+                  {isDark ? 'Switch to light theme' : 'Switch to dark theme'}
+                </Text>
+              </View>
+            </View>
+            <Switch
+              value={isDark}
+              onValueChange={toggleTheme}
+              trackColor={{ false: colors.border, true: colors.saffronPale }}
+              thumbColor={isDark ? colors.saffron : colors.saffronLight}
+            />
+          </View>
+        </View>
+
+        {/* Quick Menu Links */}
+        <View style={styles.menuCard}>
+          {QUICK_LINKS.map(({ icon, label, screen, color }, idx) => {
+            const isLast = idx === QUICK_LINKS.length - 1;
+            return (
+              <TouchableOpacity
+                key={screen}
+                style={[styles.menuItem, !isLast && styles.menuItemBorder]}
+                onPress={() => navigation.navigate(screen)}
+                activeOpacity={0.75}
+              >
+                <View style={[styles.menuIconWrap, { backgroundColor: isDark ? '#27272A' : '#F1F5F9' }]}>
+                  <Ionicons name={icon} size={18} color={color} />
+                </View>
+                <Text style={styles.menuLabel}>{label}</Text>
+                <Ionicons name="chevron-forward" size={16} color={colors.textLight} />
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
+        {/* Sign Out Button */}
+        <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} activeOpacity={0.88}>
+          <Ionicons name="log-out-outline" size={18} color={colors.error} />
+          <Text style={styles.logoutText}>Log Out</Text>
+        </TouchableOpacity>
       </ScrollView>
     </View>
   );
@@ -214,28 +205,26 @@ const createStyles = (colors, isDark) => StyleSheet.create({
   },
   scrollContent: {
     padding: 16,
-    paddingTop: 16,
+    gap: 14,
+    paddingTop: 48,
     paddingBottom: 40,
   },
-  heroCard: {
-    borderRadius: RADIUS.xl,
-    marginBottom: 16,
-  },
-  heroRow: {
+  userCard: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: colors.cardBg,
+    borderRadius: RADIUS.xl,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
     gap: 14,
-  },
-  avatarWrap: {
     ...SHADOW.small,
   },
   avatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     backgroundColor: colors.saffron,
-    borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.4)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -245,116 +234,128 @@ const createStyles = (colors, isDark) => StyleSheet.create({
     ...FONTS.heavy,
   },
   userName: {
-    color: colors.text,
-    fontSize: 18,
+    fontSize: 17,
     ...FONTS.heavy,
-    letterSpacing: -0.3,
+    color: colors.text,
   },
   phoneRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    marginTop: 3,
+    marginTop: 2,
   },
   userPhone: {
+    fontSize: 13,
     color: colors.textMuted,
-    fontSize: 12.5,
   },
   editBtn: {
-    backgroundColor: colors.glass?.pill || (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)'),
-    borderWidth: 1,
-    borderColor: colors.glass?.pillBorder || 'rgba(255,255,255,0.12)',
-    borderRadius: RADIUS.full,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.creamDark,
     paddingHorizontal: 12,
-    paddingVertical: 7,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
+    paddingVertical: 6,
+    borderRadius: RADIUS.full,
+    borderWidth: 1,
+    borderColor: colors.border,
+    gap: 4,
   },
-  editBtnTxt: {
-    color: colors.text,
+  editBtnText: {
     fontSize: 12,
     ...FONTS.semibold,
-  },
-  body: {
-    gap: 14,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    ...FONTS.bold,
     color: colors.text,
-    marginBottom: 12,
   },
-  themeToggleCard: {
+  editBox: {
+    backgroundColor: colors.cardBg,
     borderRadius: RADIUS.lg,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
-  themeToggleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  themeIconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  themeToggleLabel: {
-    fontSize: 14.5,
-    ...FONTS.semibold,
+  sectionHeader: {
+    fontSize: 15,
+    ...FONTS.heavy,
     color: colors.text,
-  },
-  themeToggleSub: {
-    fontSize: 12,
-    color: colors.textMuted,
-    marginTop: 1,
+    marginBottom: 10,
   },
   statsRow: {
     flexDirection: 'row',
     gap: 10,
   },
-  statCard: {
+  statBox: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: colors.cardBg,
     borderRadius: RADIUS.lg,
+    padding: 14,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+    ...SHADOW.small,
   },
   statNum: {
-    fontSize: 18,
+    fontSize: 20,
     ...FONTS.heavy,
     color: colors.text,
-    marginTop: 4,
   },
-  statLbl: {
+  statLabel: {
     fontSize: 11,
     color: colors.textMuted,
-    ...FONTS.medium,
+    marginTop: 2,
+  },
+  card: {
+    backgroundColor: colors.cardBg,
+    borderRadius: RADIUS.lg,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: colors.border,
+    ...SHADOW.small,
+  },
+  themeRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  themeLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  themeTitle: {
+    fontSize: 14.5,
+    ...FONTS.bold,
+    color: colors.text,
+  },
+  themeSub: {
+    fontSize: 12,
+    color: colors.textMuted,
     marginTop: 1,
   },
-  quickLinksCard: {
+  menuCard: {
+    backgroundColor: colors.cardBg,
     borderRadius: RADIUS.xl,
+    borderWidth: 1,
+    borderColor: colors.border,
     overflow: 'hidden',
+    ...SHADOW.small,
   },
-  quickLink: {
+  menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 14,
     paddingHorizontal: 16,
   },
-  quickLinkBorder: {
+  menuItemBorder: {
     borderBottomWidth: 1,
-    borderBottomColor: colors.glass?.borderSubtle || (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)'),
+    borderBottomColor: colors.border,
   },
-  quickLinkIcon: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+  menuIconWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
   },
-  quickLinkLabel: {
+  menuLabel: {
     flex: 1,
     fontSize: 14,
     ...FONTS.semibold,
@@ -363,29 +364,17 @@ const createStyles = (colors, isDark) => StyleSheet.create({
   logoutBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: isDark ? 'rgba(239,68,68,0.08)' : 'rgba(254,242,242,0.85)',
-    borderRadius: RADIUS.lg,
-    borderWidth: 1,
-    borderColor: isDark ? 'rgba(239,68,68,0.25)' : 'rgba(220,38,38,0.18)',
-    padding: 14,
-    gap: 12,
-  },
-  logoutIconWrap: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: isDark ? 'rgba(239,68,68,0.15)' : '#FEE2E2',
-    alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: colors.cardBg,
+    borderRadius: RADIUS.lg,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: isDark ? '#7F1D1D' : '#FCA5A5',
+    gap: 8,
   },
-  logoutTitle: {
+  logoutText: {
     fontSize: 14,
     ...FONTS.bold,
     color: colors.error,
-  },
-  logoutSub: {
-    fontSize: 11.5,
-    color: colors.textMuted,
-    marginTop: 1,
   },
 });

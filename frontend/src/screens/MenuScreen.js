@@ -1,3 +1,4 @@
+// src/screens/MenuScreen.js — Modern High-Contrast Menu & Dish Ordering Screen
 import React, { useEffect, useState, useCallback } from 'react';
 import {
   View, Text, FlatList, ScrollView, StyleSheet,
@@ -7,9 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import api from '../api/client';
 import { useCart } from '../context/CartContext';
 import { useTheme } from '../context/ThemeContext';
-import { VegBadge, ItemDetailModal, AmbientGlow, GlassCard } from '../components';
-import HeartButton from '../components/HeartButton';
-import StarRating from '../components/StarRating';
+import { VegBadge, ItemDetailModal } from '../components';
 import { FONTS, RADIUS, SHADOW } from '../theme';
 
 export default function MenuScreen({ route, navigation }) {
@@ -28,7 +27,7 @@ export default function MenuScreen({ route, navigation }) {
   // Load categories once
   useEffect(() => {
     api.getCategories()
-      .then(d => setCategories([{ _id: 'all', name: 'All' }, ...(d.categories || [])]))
+      .then(d => setCategories([{ _id: 'all', name: 'All Dishes' }, ...(d.categories || [])]))
       .catch(() => {});
   }, []);
 
@@ -38,24 +37,14 @@ export default function MenuScreen({ route, navigation }) {
       headerRight: () => (
         <TouchableOpacity
           onPress={() => navigation.navigate('Search')}
-          style={{
-            marginRight: 16,
-            width: 36,
-            height: 36,
-            borderRadius: 18,
-            backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
-            borderWidth: 1,
-            borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
+          style={{ marginRight: 16 }}
           activeOpacity={0.8}
         >
-          <Ionicons name="search-outline" size={19} color={colors.text} />
+          <Ionicons name="search" size={22} color={colors.white} />
         </TouchableOpacity>
       ),
     });
-  }, [navigation, colors, isDark]);
+  }, [navigation, colors]);
 
   // Load items when category changes
   const loadItems = useCallback(async (isRefresh = false) => {
@@ -86,68 +75,63 @@ export default function MenuScreen({ route, navigation }) {
     const qty    = getQty(itemId);
 
     return (
-      <GlassCard
-        style={styles.card}
-        padding={0}
+      <TouchableOpacity
+        style={styles.dishCard}
         onPress={() => {
           setSelectedItem(item);
           setShowDetailModal(true);
         }}
+        activeOpacity={0.92}
       >
-        <View style={styles.cardMedia}>
-          {item.image_url ? (
-            <Image
-              source={{ uri: item.image_url }}
-              style={styles.cardImage}
-              resizeMode="cover"
-            />
-          ) : (
-            <View style={styles.emojiContainer}>
-              <Text style={{ fontSize: 52 }}>{item.emoji || '🍲'}</Text>
-            </View>
-          )}
-
-          {/* Frosted Badges Overlay */}
-          <View style={styles.vegOverlay}>
+        {/* Left Column: Details */}
+        <View style={styles.dishDetails}>
+          <View style={styles.vegRow}>
             <VegBadge isVeg={item.is_veg === true || item.is_veg === 1} />
+            {item.tags?.[0] && (
+              <View style={styles.tagPill}>
+                <Text style={styles.tagPillText}>{item.tags[0]}</Text>
+              </View>
+            )}
           </View>
 
-          <View style={styles.heartOverlay}>
-            <HeartButton itemId={itemId} size={18} />
-          </View>
-
-          {item.tags && item.tags.length > 0 && (
-            <View style={styles.dishTagBadge}>
-              <Text style={styles.dishTagText}>{item.tags[0]}</Text>
-            </View>
-          )}
-        </View>
-
-        <View style={styles.cardBody}>
-          <View style={styles.headerRow}>
-            <Text style={styles.itemName} numberOfLines={1}>{item.name}</Text>
-          </View>
+          <Text style={styles.dishName}>{item.name}</Text>
+          <Text style={styles.dishPrice}>₹{item.price}</Text>
 
           {item.avg_rating > 0 && (
             <View style={styles.ratingRow}>
-              <StarRating rating={item.avg_rating} size={12} />
-              <Text style={styles.ratingScore}>{item.avg_rating.toFixed(1)}</Text>
+              <View style={styles.ratingBadge}>
+                <Ionicons name="star" size={10} color="#FFFFFF" />
+                <Text style={styles.ratingText}>{item.avg_rating.toFixed(1)}</Text>
+              </View>
               {item.rating_count > 0 && (
                 <Text style={styles.ratingCount}>({item.rating_count})</Text>
               )}
             </View>
           )}
 
-          <Text style={styles.itemDesc} numberOfLines={2}>
-            {item.description || 'Prepared fresh daily with traditional homestyle recipes.'}
+          <Text style={styles.dishDesc} numberOfLines={2}>
+            {item.description || 'Cooked fresh with pure ingredients and traditional recipe.'}
           </Text>
+        </View>
 
-          <View style={styles.cardFooter}>
-            <View>
-              <Text style={styles.priceLabel}>Price</Text>
-              <Text style={styles.price}>₹{item.price}</Text>
-            </View>
+        {/* Right Column: Photo + Overlapping Add Button */}
+        <View style={styles.dishMediaCol}>
+          <View style={styles.dishImageWrap}>
+            {item.image_url ? (
+              <Image
+                source={{ uri: item.image_url }}
+                style={styles.dishImage}
+                resizeMode="cover"
+              />
+            ) : (
+              <View style={styles.emojiFallback}>
+                <Text style={{ fontSize: 48 }}>{item.emoji || '🥘'}</Text>
+              </View>
+            )}
+          </View>
 
+          {/* Overlapping Add / Stepper Button */}
+          <View style={styles.addBtnContainer}>
             {qty === 0 ? (
               <TouchableOpacity
                 style={styles.addBtn}
@@ -155,10 +139,10 @@ export default function MenuScreen({ route, navigation }) {
                   e?.stopPropagation?.();
                   addItem({ ...item, id: itemId });
                 }}
-                activeOpacity={0.82}
+                activeOpacity={0.85}
               >
-                <Ionicons name="add" size={16} color="#FFFFFF" />
                 <Text style={styles.addBtnText}>ADD</Text>
+                <Ionicons name="add" size={15} color={colors.saffron} />
               </TouchableOpacity>
             ) : (
               <View style={styles.qtyCtrl}>
@@ -168,35 +152,29 @@ export default function MenuScreen({ route, navigation }) {
                     e?.stopPropagation?.();
                     removeItem(itemId);
                   }}
-                  activeOpacity={0.7}
                 >
-                  <Ionicons name="remove" size={15} color={colors.text} />
+                  <Ionicons name="remove" size={14} color="#FFFFFF" />
                 </TouchableOpacity>
-
                 <Text style={styles.qtyNum}>{qty}</Text>
-
                 <TouchableOpacity
-                  style={[styles.qtyBtn, styles.qtyBtnAdd]}
+                  style={styles.qtyBtn}
                   onPress={(e) => {
                     e?.stopPropagation?.();
                     addItem({ ...item, id: itemId });
                   }}
-                  activeOpacity={0.7}
                 >
-                  <Ionicons name="add" size={15} color="#FFFFFF" />
+                  <Ionicons name="add" size={14} color="#FFFFFF" />
                 </TouchableOpacity>
               </View>
             )}
           </View>
         </View>
-      </GlassCard>
+      </TouchableOpacity>
     );
   }
 
   return (
     <View style={styles.screen}>
-      <AmbientGlow />
-
       {/* Category Horizontal Filter Bar */}
       <View style={styles.filterBarContainer}>
         <ScrollView
@@ -207,8 +185,6 @@ export default function MenuScreen({ route, navigation }) {
           {categories.map((cat) => {
             const catId = cat._id || cat.id;
             const isActive = activeCat === catId;
-            const hasEmoji = cat.emoji && catId !== 'all';
-
             return (
               <TouchableOpacity
                 key={catId}
@@ -219,7 +195,9 @@ export default function MenuScreen({ route, navigation }) {
                 onPress={() => setActiveCat(catId)}
                 activeOpacity={0.8}
               >
-                {hasEmoji ? <Text style={styles.catEmoji}>{cat.emoji}</Text> : null}
+                {cat.emoji && catId !== 'all' ? (
+                  <Text style={styles.catEmoji}>{cat.emoji}</Text>
+                ) : null}
                 <Text style={[styles.catLabel, isActive && styles.catLabelActive]}>
                   {cat.name}
                 </Text>
@@ -233,9 +211,7 @@ export default function MenuScreen({ route, navigation }) {
       {loading && !refreshing ? (
         <View style={styles.center}>
           <ActivityIndicator size="large" color={colors.saffron} />
-          <Text style={{ color: colors.textMuted, marginTop: 12, fontSize: 14, ...FONTS.medium }}>
-            Loading wholesome menu...
-          </Text>
+          <Text style={styles.loadingText}>Fetching freshly prepared menu...</Text>
         </View>
       ) : (
         <FlatList
@@ -244,6 +220,7 @@ export default function MenuScreen({ route, navigation }) {
           renderItem={renderItem}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
+          ItemSeparatorComponent={() => <View style={styles.itemSeparator} />}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
@@ -254,15 +231,9 @@ export default function MenuScreen({ route, navigation }) {
           }
           ListEmptyComponent={
             <View style={styles.center}>
-              <View style={styles.emptyIconWrap}>
-                <Ionicons name="restaurant-outline" size={40} color={colors.textLight} />
-              </View>
-              <Text style={{ color: colors.text, marginTop: 14, fontSize: 16, ...FONTS.semibold }}>
-                No dishes in this category
-              </Text>
-              <Text style={{ color: colors.textMuted, marginTop: 4, fontSize: 13, textAlign: 'center' }}>
-                Try selecting "All" to browse our complete selection.
-              </Text>
+              <Ionicons name="restaurant-outline" size={48} color={colors.border} />
+              <Text style={styles.emptyTitle}>No dishes found</Text>
+              <Text style={styles.emptySubtitle}>Try choosing another category above.</Text>
             </View>
           }
         />
@@ -279,28 +250,25 @@ export default function MenuScreen({ route, navigation }) {
         navigation={navigation}
       />
 
-      {/* Floating Glassmorphic Cart Capsule */}
+      {/* Swiggy/Zomato Floating Bottom Cart Bar */}
       {itemCount > 0 && (
         <TouchableOpacity
           style={styles.floatingCart}
           onPress={() => navigation.navigate('Cart')}
           activeOpacity={0.92}
         >
-          <View style={styles.floatingCartLeft}>
-            <View style={styles.cartCountPill}>
-              <Ionicons name="bag-handle" size={15} color="#FFFFFF" />
+          <View style={styles.cartLeft}>
+            <View style={styles.cartBadge}>
               <Text style={styles.cartBadgeText}>{itemCount}</Text>
             </View>
             <View>
-              <Text style={styles.floatingCartItems}>{itemCount} dish{itemCount > 1 ? 'es' : ''} added</Text>
-              <Text style={styles.floatingCartTotal}>₹{itemTotal}</Text>
+              <Text style={styles.cartItemText}>{itemCount} ITEM{itemCount > 1 ? 'S' : ''}</Text>
+              <Text style={styles.cartPriceText}>₹{itemTotal}</Text>
             </View>
           </View>
-          <View style={styles.floatingCartRight}>
-            <Text style={styles.floatingCartCta}>View Cart</Text>
-            <View style={styles.cartArrowWrap}>
-              <Ionicons name="arrow-forward" size={15} color="#FFFFFF" />
-            </View>
+          <View style={styles.cartRight}>
+            <Text style={styles.viewCartText}>VIEW CART</Text>
+            <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
           </View>
         </TouchableOpacity>
       )}
@@ -314,34 +282,32 @@ const createStyles = (colors, isDark) => StyleSheet.create({
     backgroundColor: colors.cream,
   },
   filterBarContainer: {
-    paddingVertical: 12,
+    backgroundColor: colors.cardBg,
     borderBottomWidth: 1,
-    borderBottomColor: colors.glass?.borderSubtle || (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'),
-    backgroundColor: isDark ? 'rgba(9,9,11,0.75)' : 'rgba(248,250,248,0.75)',
+    borderBottomColor: colors.border,
+    paddingVertical: 10,
   },
   filterBarContent: {
     paddingHorizontal: 16,
-    gap: 10,
+    gap: 8,
   },
   catBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 15,
-    paddingVertical: 8.5,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
     borderRadius: RADIUS.full,
-    backgroundColor: colors.glass?.pill || (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.85)'),
+    backgroundColor: colors.creamDark,
     borderWidth: 1,
-    borderColor: colors.glass?.pillBorder || 'rgba(255,255,255,0.1)',
+    borderColor: colors.border,
+    gap: 6,
   },
   catBtnActive: {
-    backgroundColor: colors.glass?.pillActive || (isDark ? 'rgba(245,158,11,0.2)' : 'rgba(22,163,74,0.15)'),
-    borderColor: colors.glass?.pillActiveBorder || colors.saffron,
-    borderTopColor: colors.saffronLight,
-    ...SHADOW.small,
+    backgroundColor: colors.saffron,
+    borderColor: colors.saffron,
   },
   catEmoji: {
     fontSize: 14,
-    marginRight: 6,
   },
   catLabel: {
     fontSize: 13,
@@ -349,252 +315,228 @@ const createStyles = (colors, isDark) => StyleSheet.create({
     color: colors.textMuted,
   },
   catLabelActive: {
-    color: colors.saffron,
+    color: '#FFFFFF',
     ...FONTS.bold,
   },
   list: {
     padding: 16,
-    gap: 16,
     paddingBottom: 90,
   },
-  card: {
-    borderRadius: RADIUS.xl,
-    overflow: 'hidden',
+  itemSeparator: {
+    height: 1,
+    backgroundColor: colors.border,
+    marginVertical: 14,
   },
-  cardMedia: {
-    width: '100%',
-    height: 160,
-    backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : '#F1F5F9',
-    position: 'relative',
-    overflow: 'hidden',
-  },
-  cardImage: {
-    width: '100%',
-    height: '100%',
-  },
-  emojiContainer: {
-    width: '100%',
-    height: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  vegOverlay: {
-    position: 'absolute',
-    top: 12,
-    left: 12,
-    borderRadius: 6,
-    padding: 4,
-    backgroundColor: 'rgba(0,0,0,0.45)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.15)',
-  },
-  heartOverlay: {
-    position: 'absolute',
-    top: 12,
-    right: 12,
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: 'rgba(0,0,0,0.45)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.15)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  dishTagBadge: {
-    position: 'absolute',
-    bottom: 10,
-    left: 12,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: RADIUS.full,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
-  },
-  dishTagText: {
-    color: '#FFFFFF',
-    fontSize: 9.5,
-    ...FONTS.bold,
-    textTransform: 'uppercase',
-    letterSpacing: 0.4,
-  },
-  cardBody: {
-    padding: 16,
-  },
-  headerRow: {
+  dishCard: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 4,
+    backgroundColor: colors.cardBg,
+    borderRadius: RADIUS.lg,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    ...SHADOW.small,
   },
-  itemName: {
-    fontSize: 16.5,
+  dishDetails: {
+    flex: 1,
+    paddingRight: 14,
+  },
+  vegRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 6,
+  },
+  tagPill: {
+    backgroundColor: colors.saffronPale,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  tagPillText: {
+    fontSize: 10,
+    ...FONTS.bold,
+    color: colors.saffron,
+    textTransform: 'uppercase',
+  },
+  dishName: {
+    fontSize: 16,
     ...FONTS.bold,
     color: colors.text,
-    letterSpacing: -0.2,
-    flex: 1,
+    marginBottom: 4,
+  },
+  dishPrice: {
+    fontSize: 16,
+    ...FONTS.heavy,
+    color: colors.text,
+    marginBottom: 4,
   },
   ratingRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    marginBottom: 8,
+    gap: 6,
+    marginBottom: 6,
   },
-  ratingScore: {
-    fontSize: 11.5,
+  ratingBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#15803D',
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+    borderRadius: 4,
+    gap: 3,
+  },
+  ratingText: {
+    fontSize: 11,
     ...FONTS.bold,
-    color: colors.text,
+    color: '#FFFFFF',
   },
   ratingCount: {
     fontSize: 11,
     color: colors.textMuted,
   },
-  itemDesc: {
+  dishDesc: {
     fontSize: 12.5,
     color: colors.textMuted,
-    lineHeight: 18,
-    marginBottom: 14,
+    lineHeight: 17,
   },
-  cardFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
+  dishMediaCol: {
+    width: 110,
+    alignItems: 'center',
   },
-  priceLabel: {
-    fontSize: 10.5,
-    color: colors.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+  dishImageWrap: {
+    width: 110,
+    height: 100,
+    borderRadius: RADIUS.md,
+    backgroundColor: colors.creamDark,
+    overflow: 'hidden',
   },
-  price: {
-    fontSize: 18,
-    ...FONTS.heavy,
-    color: colors.saffron,
-    letterSpacing: -0.3,
+  dishImage: {
+    width: '100%',
+    height: '100%',
+  },
+  emojiFallback: {
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addBtnContainer: {
+    marginTop: -16,
+    ...SHADOW.medium,
   },
   addBtn: {
-    backgroundColor: colors.saffron,
-    borderRadius: RADIUS.full,
-    paddingHorizontal: 20,
-    paddingVertical: 8,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.3)',
-    ...SHADOW.small,
+    backgroundColor: colors.cardBg,
+    borderColor: colors.saffron,
+    borderWidth: 1.5,
+    borderRadius: RADIUS.md,
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    gap: 4,
   },
   addBtnText: {
-    color: '#FFFFFF',
-    ...FONTS.bold,
     fontSize: 13,
-    letterSpacing: 0.5,
+    ...FONTS.heavy,
+    color: colors.saffron,
+    letterSpacing: 0.3,
   },
   qtyCtrl: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.glass?.card || (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)'),
-    borderRadius: RADIUS.full,
-    padding: 3,
-    borderWidth: 1,
-    borderColor: colors.glass?.border || 'rgba(255,255,255,0.14)',
+    backgroundColor: colors.saffron,
+    borderRadius: RADIUS.md,
+    paddingHorizontal: 6,
+    paddingVertical: 5,
   },
   qtyBtn: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : '#FFFFFF',
+    width: 22,
+    height: 22,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  qtyBtnAdd: {
-    backgroundColor: colors.saffron,
-  },
   qtyNum: {
-    fontSize: 14,
-    ...FONTS.bold,
-    color: colors.text,
-    minWidth: 28,
+    fontSize: 13.5,
+    ...FONTS.heavy,
+    color: '#FFFFFF',
+    minWidth: 24,
     textAlign: 'center',
   },
   center: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 40,
+    padding: 32,
   },
-  emptyIconWrap: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: colors.glass?.card || (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'),
-    borderWidth: 1,
-    borderColor: colors.glass?.border || 'rgba(255,255,255,0.1)',
-    alignItems: 'center',
-    justifyContent: 'center',
+  loadingText: {
+    color: colors.textMuted,
+    marginTop: 12,
+    fontSize: 14,
+  },
+  emptyTitle: {
+    fontSize: 16,
+    ...FONTS.bold,
+    color: colors.text,
+    marginTop: 12,
+  },
+  emptySubtitle: {
+    fontSize: 13,
+    color: colors.textMuted,
+    marginTop: 4,
   },
   floatingCart: {
     position: 'absolute',
-    bottom: 22,
+    bottom: 18,
     left: 16,
     right: 16,
     backgroundColor: colors.saffron,
-    borderRadius: RADIUS.xl,
+    borderRadius: RADIUS.lg,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 12,
-    paddingHorizontal: 18,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.3)',
-    ...SHADOW.glassGlow,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    ...SHADOW.large,
   },
-  floatingCartLeft: {
+  cartLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
   },
-  cartCountPill: {
-    flexDirection: 'row',
+  cartBadge: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(0,0,0,0.2)',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.22)',
-    paddingHorizontal: 8,
-    paddingVertical: 5,
-    borderRadius: RADIUS.full,
-    gap: 4,
+    justifyContent: 'center',
   },
   cartBadgeText: {
-    ...FONTS.bold,
+    ...FONTS.heavy,
     fontSize: 13,
     color: '#FFFFFF',
   },
-  floatingCartItems: {
-    ...FONTS.medium,
-    fontSize: 11.5,
-    color: 'rgba(255,255,255,0.9)',
-  },
-  floatingCartTotal: {
+  cartItemText: {
+    fontSize: 10,
     ...FONTS.bold,
-    fontSize: 16.5,
+    color: 'rgba(255,255,255,0.85)',
+    letterSpacing: 0.5,
+  },
+  cartPriceText: {
+    fontSize: 16,
+    ...FONTS.heavy,
     color: '#FFFFFF',
   },
-  floatingCartRight: {
+  cartRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
   },
-  floatingCartCta: {
-    ...FONTS.bold,
+  viewCartText: {
     fontSize: 14,
+    ...FONTS.heavy,
     color: '#FFFFFF',
-  },
-  cartArrowWrap: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.25)',
-    alignItems: 'center',
-    justifyContent: 'center',
+    letterSpacing: 0.5,
   },
 });

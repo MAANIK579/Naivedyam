@@ -1,4 +1,4 @@
-// src/components/index.js — Shared UI components with Glassmorphic styling
+// src/components/index.js — Shared UI components for Navedyam
 
 import React from 'react';
 import {
@@ -11,33 +11,20 @@ import { FONTS, RADIUS, SHADOW, SPACING } from '../theme';
 
 // ── Button ────────────────────────────────────────────────
 export function Button({ title, onPress, loading, variant = 'primary', style, textStyle, icon }) {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
 
-  const isGlass = variant === 'glass';
   const isOutline = variant === 'outline';
+  const isSecondary = variant === 'secondary';
 
-  const bg = variant === 'primary'  ? colors.saffron
-           : variant === 'outline'  ? 'transparent'
-           : variant === 'green'    ? colors.green
-           : variant === 'danger'   ? colors.error
-           : variant === 'glass'    ? (colors.glass?.pill || (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.85)'))
-           : colors.brown;
+  const bg = variant === 'primary'   ? colors.saffron
+           : variant === 'secondary' ? colors.creamDark
+           : variant === 'outline'   ? 'transparent'
+           : variant === 'green'     ? colors.green
+           : variant === 'danger'    ? colors.error
+           : colors.saffron;
 
-  const borderColor = isGlass
-    ? (colors.glass?.border || (isDark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.08)'))
-    : isOutline
-    ? colors.saffron
-    : 'transparent';
-
-  const borderTopColor = isGlass
-    ? (colors.glass?.highlight || (isDark ? 'rgba(255,255,255,0.35)' : '#FFFFFF'))
-    : borderColor;
-
-  const color = isGlass
-    ? colors.text
-    : isOutline
-    ? colors.saffron
-    : colors.white;
+  const borderColor = isOutline ? colors.saffron : isSecondary ? colors.border : 'transparent';
+  const color = isOutline ? colors.saffron : isSecondary ? colors.text : '#FFFFFF';
 
   return (
     <TouchableOpacity
@@ -48,18 +35,17 @@ export function Button({ title, onPress, loading, variant = 'primary', style, te
         {
           backgroundColor: bg,
           borderColor,
-          borderTopColor,
-          borderWidth: isOutline ? 1.5 : (isGlass ? 1 : 0),
+          borderWidth: isOutline || isSecondary ? 1 : 0,
           opacity: loading ? 0.7 : 1,
         },
         style
       ]}
-      activeOpacity={0.8}
+      activeOpacity={0.82}
     >
       {loading ? (
-        <ActivityIndicator color={color} />
+        <ActivityIndicator color={color} size="small" />
       ) : (
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
           {icon && <Ionicons name={icon} size={18} color={color} />}
           <Text style={[styles.btnText, { color }, textStyle]}>{title}</Text>
         </View>
@@ -70,7 +56,7 @@ export function Button({ title, onPress, loading, variant = 'primary', style, te
 
 // ── Input ──────────────────────────────────────────────────
 export function Input({ label, style, inputStyle, error, leftIcon, ...props }) {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
 
   return (
     <View style={[{ marginBottom: 14 }, style]}>
@@ -78,13 +64,12 @@ export function Input({ label, style, inputStyle, error, leftIcon, ...props }) {
       <View style={[
         styles.inputWrap,
         {
-          backgroundColor: colors.glass?.card || (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.8)'),
-          borderColor: colors.glass?.border || (isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)'),
-          borderTopColor: colors.glass?.highlight || (isDark ? 'rgba(255,255,255,0.22)' : '#FFFFFF'),
+          backgroundColor: colors.creamDark,
+          borderColor: error ? colors.error : colors.border,
         }
       ]}>
         {leftIcon && (
-          <Ionicons name={leftIcon} size={18} color={colors.textMuted} style={{ marginRight: 8 }} />
+          <Ionicons name={leftIcon} size={18} color={colors.textLight} style={{ marginRight: 8 }} />
         )}
         <TextInput
           placeholderTextColor={colors.textLight}
@@ -99,23 +84,21 @@ export function Input({ label, style, inputStyle, error, leftIcon, ...props }) {
 
 // ── Card ──────────────────────────────────────────────────
 export function Card({ children, style, elevated = false, onPress }) {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
 
   const cardStyle = [
     styles.card,
     {
-      backgroundColor: elevated
-        ? (colors.glass?.cardElevated || (isDark ? 'rgba(255,255,255,0.11)' : 'rgba(255,255,255,0.95)'))
-        : (colors.glass?.card || (isDark ? 'rgba(255,255,255,0.07)' : 'rgba(255,255,255,0.84)')),
-      borderColor: colors.glass?.border || (isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.08)'),
-      borderTopColor: colors.glass?.highlight || (isDark ? 'rgba(255,255,255,0.28)' : '#FFFFFF'),
+      backgroundColor: elevated ? colors.cardElevated : colors.cardBg,
+      borderColor: colors.border,
     },
+    elevated ? SHADOW.medium : SHADOW.small,
     style
   ];
 
   if (onPress) {
     return (
-      <TouchableOpacity onPress={onPress} activeOpacity={0.88} style={cardStyle}>
+      <TouchableOpacity onPress={onPress} activeOpacity={0.85} style={cardStyle}>
         {children}
       </TouchableOpacity>
     );
@@ -124,13 +107,12 @@ export function Card({ children, style, elevated = false, onPress }) {
   return <View style={cardStyle}>{children}</View>;
 }
 
-// ── VegBadge ──────────────────────────────────────────────
+// ── VegBadge (Official Standard Indian FSSAI Veg Symbol) ────
 export function VegBadge({ isVeg }) {
-  const { colors } = useTheme();
-  const color = isVeg ? colors.green : colors.error;
+  const color = isVeg ? '#16A34A' : '#DC2626';
 
   return (
-    <View style={[styles.vegBadge, { borderColor: color, backgroundColor: 'rgba(0,0,0,0.3)' }]}>
+    <View style={[styles.vegBadge, { borderColor: color }]}>
       <View style={[styles.vegDot, { backgroundColor: color }]} />
     </View>
   );
@@ -141,16 +123,16 @@ export function StatusPill({ status }) {
   const { isDark, colors } = useTheme();
 
   const map = {
-    placed:           { bg: isDark ? 'rgba(245, 158, 11, 0.16)' : 'rgba(245, 158, 11, 0.12)', border: isDark ? 'rgba(245, 158, 11, 0.35)' : 'rgba(245, 158, 11, 0.25)', color: colors.saffron, label: 'Placed',      icon: 'receipt-outline' },
-    confirmed:        { bg: isDark ? 'rgba(245, 158, 11, 0.2)'  : 'rgba(245, 158, 11, 0.15)', border: isDark ? 'rgba(245, 158, 11, 0.45)' : 'rgba(245, 158, 11, 0.3)', color: colors.saffron, label: 'Confirmed',   icon: 'checkmark-circle-outline' },
-    preparing:        { bg: isDark ? 'rgba(245, 158, 11, 0.22)' : 'rgba(245, 158, 11, 0.18)', border: isDark ? 'rgba(245, 158, 11, 0.5)' : 'rgba(245, 158, 11, 0.35)', color: colors.saffron, label: 'Preparing',   icon: 'flame-outline' },
-    out_for_delivery: { bg: isDark ? 'rgba(34, 197, 94, 0.2)'   : 'rgba(34, 197, 94, 0.15)', border: isDark ? 'rgba(34, 197, 94, 0.45)' : 'rgba(34, 197, 94, 0.3)', color: colors.green,   label: 'On the way',  icon: 'bicycle-outline' },
-    delivered:        { bg: isDark ? 'rgba(34, 197, 94, 0.22)'  : 'rgba(34, 197, 94, 0.18)', border: isDark ? 'rgba(34, 197, 94, 0.5)' : 'rgba(34, 197, 94, 0.35)', color: colors.green,   label: 'Delivered',    icon: 'checkmark-done-outline' },
-    cancelled:        { bg: isDark ? 'rgba(239, 68, 68, 0.2)'   : 'rgba(239, 68, 68, 0.15)', border: isDark ? 'rgba(239, 68, 68, 0.45)' : 'rgba(239, 68, 68, 0.3)', color: colors.error,   label: 'Cancelled',   icon: 'close-circle-outline' },
+    placed:           { bg: isDark ? '#431407' : '#FFEDD5', border: '#FB923C', color: colors.saffron, label: 'Placed',      icon: 'receipt-outline' },
+    confirmed:        { bg: isDark ? '#431407' : '#FFEDD5', border: '#FB923C', color: colors.saffron, label: 'Confirmed',   icon: 'checkmark-circle-outline' },
+    preparing:        { bg: isDark ? '#451A03' : '#FEF3C7', border: '#FBBF24', color: colors.turmeric, label: 'Cooking',     icon: 'flame-outline' },
+    out_for_delivery: { bg: isDark ? '#052E16' : '#DCFCE7', border: '#4ADE80', color: colors.green,   label: 'On the Way',  icon: 'bicycle-outline' },
+    delivered:        { bg: isDark ? '#052E16' : '#DCFCE7', border: '#4ADE80', color: colors.green,   label: 'Delivered',   icon: 'checkmark-done-circle-outline' },
+    cancelled:        { bg: isDark ? '#450A0A' : '#FEE2E2', border: '#F87171', color: colors.error,   label: 'Cancelled',   icon: 'close-circle-outline' },
   };
   const { bg, border, color, label, icon } = map[status] || {
-    bg: colors.glass?.pill || 'rgba(255,255,255,0.08)',
-    border: colors.glass?.border || 'rgba(255,255,255,0.12)',
+    bg: colors.creamDark,
+    border: colors.border,
     color: colors.textMuted,
     label: status,
     icon: 'help-circle-outline',
@@ -158,7 +140,7 @@ export function StatusPill({ status }) {
 
   return (
     <View style={[styles.pill, { backgroundColor: bg, borderColor: border, borderWidth: 1 }]}>
-      <Ionicons name={icon} size={12} color={color} style={{ marginRight: 4 }} />
+      <Ionicons name={icon} size={13} color={color} style={{ marginRight: 4 }} />
       <Text style={[styles.pillText, { color }]}>{label}</Text>
     </View>
   );
@@ -166,8 +148,8 @@ export function StatusPill({ status }) {
 
 // ── Divider ───────────────────────────────────────────────
 export function Divider({ style }) {
-  const { colors, isDark } = useTheme();
-  return <View style={[styles.divider, { backgroundColor: colors.glass?.borderSubtle || (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)') }, style]} />;
+  const { colors } = useTheme();
+  return <View style={[styles.divider, { backgroundColor: colors.border }, style]} />;
 }
 
 // ── Re-exports ────────────────────────────────────────────
@@ -197,32 +179,30 @@ const styles = StyleSheet.create({
   btn: {
     borderRadius: RADIUS.lg,
     paddingVertical: 14,
-    paddingHorizontal: 24,
+    paddingHorizontal: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    ...SHADOW.small,
   },
   btnText: {
     ...FONTS.bold,
     fontSize: 15,
-    letterSpacing: 0.3,
+    letterSpacing: 0.2,
   },
   inputLabel: {
     ...FONTS.semibold,
     fontSize: 13,
     marginBottom: 6,
-    letterSpacing: 0.3,
   },
   inputWrap: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
     borderRadius: RADIUS.md,
-    paddingHorizontal: 13,
+    paddingHorizontal: 14,
   },
   input: {
     flex: 1,
-    paddingVertical: 13,
+    paddingVertical: 12,
     fontSize: 15,
     ...FONTS.regular,
   },
@@ -235,33 +215,33 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.lg,
     borderWidth: 1,
     padding: SPACING.lg,
-    ...SHADOW.small,
   },
   vegBadge: {
-    width: 18,
-    height: 18,
+    width: 17,
+    height: 17,
     borderWidth: 1.5,
-    borderRadius: 4,
+    borderRadius: 3,
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
   },
   vegDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
   },
   pill: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 4.5,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
     borderRadius: RADIUS.full,
     alignSelf: 'flex-start',
   },
   pillText: {
     fontSize: 11,
     ...FONTS.bold,
-    letterSpacing: 0.4,
+    letterSpacing: 0.3,
     textTransform: 'uppercase',
   },
   divider: {
@@ -269,12 +249,12 @@ const styles = StyleSheet.create({
     marginVertical: SPACING.md,
   },
   sectionTitle: {
-    fontSize: 19,
+    fontSize: 18,
     ...FONTS.bold,
     letterSpacing: -0.3,
   },
   sectionSub: {
-    fontSize: 13,
+    fontSize: 12.5,
     marginTop: 2,
   },
 });

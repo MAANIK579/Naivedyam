@@ -1,4 +1,4 @@
-// src/screens/SearchScreen.js — Glassmorphic Search & Filter Experience
+// src/screens/SearchScreen.js — Clean, Fast Search & Filter Experience
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity, StyleSheet,
@@ -8,7 +8,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { FONTS, RADIUS, SHADOW } from '../theme';
-import { VegBadge, GlassCard, AmbientGlow } from '../components';
+import { VegBadge } from '../components';
 import SearchBar from '../components/SearchBar';
 import EmptyState from '../components/EmptyState';
 import { api } from '../api/client';
@@ -16,7 +16,6 @@ import { useCart } from '../context/CartContext';
 
 const RECENT_SEARCHES_KEY = '@navedyam_recent_searches';
 const MAX_RECENT_SEARCHES = 8;
-
 const POPULAR_SEARCHES = ['Thali', 'Dal Makhani', 'Paneer', 'Roti', 'Biryani', 'Lassi'];
 
 const PRICE_FILTERS = [
@@ -70,7 +69,7 @@ export default function SearchScreen({ navigation }) {
   }
 
   useEffect(() => {
-    const timer = setTimeout(() => { runSearch(); }, 400);
+    const timer = setTimeout(() => { runSearch(); }, 350);
     return () => clearTimeout(timer);
   }, [query, vegOnly, priceFilter, sort]);
 
@@ -115,73 +114,56 @@ export default function SearchScreen({ navigation }) {
     const qty = getQty(itemId);
 
     return (
-      <GlassCard style={styles.itemCard} padding={12}>
-        <View style={styles.itemLeft}>
-          <View style={styles.thumbContainer}>
-            {item.image_url ? (
-              <Image
-                source={{ uri: item.image_url }}
-                style={styles.itemImage}
-                resizeMode="cover"
-              />
-            ) : (
-              <Text style={{ fontSize: 26 }}>{item.emoji || '🍽️'}</Text>
-            )}
-          </View>
-
-          <View style={styles.itemInfo}>
-            <View style={styles.itemNameRow}>
-              <VegBadge isVeg={item.is_veg === true || item.is_veg === 1} />
-              <Text style={styles.itemName} numberOfLines={1}>{item.name}</Text>
-            </View>
-
-            {item.description ? (
-              <Text style={styles.itemDesc} numberOfLines={2}>{item.description}</Text>
-            ) : null}
-
-            <Text style={styles.itemPrice}>₹{item.price}</Text>
-          </View>
+      <View style={styles.dishCard}>
+        <View style={styles.dishMedia}>
+          {item.image_url ? (
+            <Image source={{ uri: item.image_url }} style={styles.dishThumb} resizeMode="cover" />
+          ) : (
+            <Text style={{ fontSize: 28 }}>{item.emoji || '🍽️'}</Text>
+          )}
         </View>
 
-        <View style={styles.itemRight}>
+        <View style={styles.dishInfo}>
+          <View style={styles.dishTitleRow}>
+            <VegBadge isVeg={item.is_veg === true || item.is_veg === 1} />
+            <Text style={styles.dishName} numberOfLines={1}>{item.name}</Text>
+          </View>
+
+          {item.description ? (
+            <Text style={styles.dishDesc} numberOfLines={1}>{item.description}</Text>
+          ) : null}
+
+          <Text style={styles.dishPrice}>₹{item.price}</Text>
+        </View>
+
+        <View style={styles.dishAction}>
           {qty === 0 ? (
             <TouchableOpacity
               style={styles.addBtn}
               onPress={() => addItem({ ...item, id: itemId })}
               activeOpacity={0.8}
             >
-              <Ionicons name="add" size={14} color="#FFFFFF" />
               <Text style={styles.addBtnText}>ADD</Text>
             </TouchableOpacity>
           ) : (
-            <View style={styles.qtyRow}>
-              <TouchableOpacity
-                style={styles.qtyBtn}
-                onPress={() => removeItem(itemId)}
-                activeOpacity={0.7}
-              >
-                <Ionicons name="remove" size={14} color={colors.text} />
+            <View style={styles.qtyCtrl}>
+              <TouchableOpacity style={styles.qtyBtn} onPress={() => removeItem(itemId)}>
+                <Ionicons name="remove" size={14} color="#FFFFFF" />
               </TouchableOpacity>
               <Text style={styles.qtyNum}>{qty}</Text>
-              <TouchableOpacity
-                style={[styles.qtyBtn, styles.qtyBtnAdd]}
-                onPress={() => addItem({ ...item, id: itemId })}
-                activeOpacity={0.7}
-              >
+              <TouchableOpacity style={styles.qtyBtn} onPress={() => addItem({ ...item, id: itemId })}>
                 <Ionicons name="add" size={14} color="#FFFFFF" />
               </TouchableOpacity>
             </View>
           )}
         </View>
-      </GlassCard>
+      </View>
     );
   }
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <AmbientGlow />
-
-      {/* Header with Back & SearchBar */}
+      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
@@ -195,14 +177,14 @@ export default function SearchScreen({ navigation }) {
           <SearchBar
             value={query}
             onChangeText={setQuery}
-            placeholder="Search thali, roti, dal, sweets..."
+            placeholder="Search dishes, thalis, breads..."
             onSubmit={runSearch}
             style={styles.searchBar}
           />
         </View>
       </View>
 
-      {/* Horizontal Filter Chips */}
+      {/* Filter Row */}
       <View style={styles.filterOuter}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
           <TouchableOpacity
@@ -210,8 +192,8 @@ export default function SearchScreen({ navigation }) {
             onPress={() => setVegOnly(v => !v)}
             activeOpacity={0.8}
           >
-            <Ionicons name="leaf" size={13} color={vegOnly ? '#FFFFFF' : colors.green} style={{ marginRight: 4 }} />
-            <Text style={[styles.chipText, vegOnly && styles.chipTextActive]}>Pure Veg</Text>
+            <Ionicons name="leaf" size={13} color={vegOnly ? '#FFFFFF' : '#16A34A'} style={{ marginRight: 4 }} />
+            <Text style={[styles.chipText, vegOnly && styles.chipTextActive]}>Veg Only</Text>
           </TouchableOpacity>
 
           {PRICE_FILTERS.map(f => (
@@ -232,7 +214,7 @@ export default function SearchScreen({ navigation }) {
             onPress={() => setShowSort(v => !v)}
             activeOpacity={0.8}
           >
-            <Ionicons name="swap-vertical" size={13} color={showSort ? '#FFFFFF' : colors.textLight} style={{ marginRight: 4 }} />
+            <Ionicons name="swap-vertical" size={13} color={showSort ? '#FFFFFF' : colors.textMuted} style={{ marginRight: 4 }} />
             <Text style={[styles.chipText, showSort && styles.chipTextActive]}>
               {SORT_OPTIONS.find(s => s.value === sort)?.label}
             </Text>
@@ -240,7 +222,7 @@ export default function SearchScreen({ navigation }) {
         </ScrollView>
 
         {showSort && (
-          <GlassCard elevated style={styles.sortMenu} padding={6}>
+          <View style={styles.sortMenu}>
             {SORT_OPTIONS.map(opt => (
               <TouchableOpacity
                 key={opt.value}
@@ -259,11 +241,11 @@ export default function SearchScreen({ navigation }) {
                 </Text>
               </TouchableOpacity>
             ))}
-          </GlassCard>
+          </View>
         )}
       </View>
 
-      {/* Main Content Area */}
+      {/* Results Content */}
       {loading ? (
         <View style={styles.centered}>
           <ActivityIndicator size="large" color={colors.saffron} />
@@ -272,8 +254,8 @@ export default function SearchScreen({ navigation }) {
       ) : searched && results.length === 0 ? (
         <EmptyState
           icon="search-outline"
-          title="No dishes found"
-          subtitle={`No matching items for "${query}". Try searching for thali, paneer, or dal.`}
+          title="No results found"
+          subtitle={`No dishes found for "${query}". Try searching for Paneer or Thali.`}
         />
       ) : !searched ? (
         <ScrollView style={styles.suggestionsContainer} showsVerticalScrollIndicator={false}>
@@ -292,7 +274,6 @@ export default function SearchScreen({ navigation }) {
                     key={i}
                     style={styles.suggestionTag}
                     onPress={() => handleRecentSearch(term)}
-                    activeOpacity={0.8}
                   >
                     <Ionicons name="time-outline" size={13} color={colors.textLight} />
                     <Text style={styles.suggestionTagText}>{term}</Text>
@@ -310,7 +291,6 @@ export default function SearchScreen({ navigation }) {
                   key={i}
                   style={[styles.suggestionTag, styles.popularTag]}
                   onPress={() => handleRecentSearch(term)}
-                  activeOpacity={0.8}
                 >
                   <Ionicons name="trending-up" size={13} color={colors.saffron} />
                   <Text style={[styles.suggestionTagText, styles.popularTagText]}>{term}</Text>
@@ -326,6 +306,7 @@ export default function SearchScreen({ navigation }) {
           renderItem={renderItem}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
+          ItemSeparatorComponent={() => <View style={styles.separator} />}
         />
       )}
     </SafeAreaView>
@@ -342,17 +323,13 @@ const createStyles = (colors, isDark) => StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 10,
+    backgroundColor: colors.cardBg,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
     gap: 10,
   },
   backBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: colors.glass?.pill || (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)'),
-    borderWidth: 1,
-    borderColor: colors.glass?.pillBorder || 'rgba(255,255,255,0.12)',
-    alignItems: 'center',
-    justifyContent: 'center',
+    padding: 6,
   },
   searchBarWrap: {
     flex: 1,
@@ -361,6 +338,9 @@ const createStyles = (colors, isDark) => StyleSheet.create({
     marginBottom: 0,
   },
   filterOuter: {
+    backgroundColor: colors.cardBg,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
     paddingVertical: 8,
     zIndex: 10,
   },
@@ -372,30 +352,34 @@ const createStyles = (colors, isDark) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 12,
-    paddingVertical: 6.5,
+    paddingVertical: 6,
     borderRadius: RADIUS.full,
-    backgroundColor: colors.glass?.pill || (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.85)'),
+    backgroundColor: colors.creamDark,
     borderWidth: 1,
-    borderColor: colors.glass?.pillBorder || 'rgba(255,255,255,0.1)',
+    borderColor: colors.border,
   },
   chipActive: {
-    backgroundColor: colors.glass?.pillActive || (isDark ? 'rgba(245,158,11,0.2)' : 'rgba(22,163,74,0.16)'),
-    borderColor: colors.glass?.pillActiveBorder || colors.saffron,
+    backgroundColor: colors.saffron,
+    borderColor: colors.saffron,
   },
   chipText: {
-    ...FONTS.semibold,
     fontSize: 12.5,
+    ...FONTS.semibold,
     color: colors.textMuted,
   },
   chipTextActive: {
-    color: colors.saffron,
+    color: '#FFFFFF',
     ...FONTS.bold,
   },
   sortMenu: {
     position: 'absolute',
     top: 48,
     right: 16,
-    borderRadius: RADIUS.lg,
+    backgroundColor: colors.cardBg,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    ...SHADOW.medium,
     zIndex: 20,
     minWidth: 160,
   },
@@ -404,13 +388,13 @@ const createStyles = (colors, isDark) => StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 12,
     paddingVertical: 10,
-    borderRadius: RADIUS.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderLight,
   },
   sortOptionActive: {
-    backgroundColor: isDark ? 'rgba(245,158,11,0.15)' : 'rgba(22,163,74,0.1)',
+    backgroundColor: colors.saffronPale,
   },
   sortOptionText: {
-    ...FONTS.regular,
     fontSize: 13,
     color: colors.text,
   },
@@ -426,103 +410,96 @@ const createStyles = (colors, isDark) => StyleSheet.create({
   },
   list: {
     padding: 16,
-    gap: 12,
     paddingBottom: 40,
   },
-  itemCard: {
+  separator: {
+    height: 10,
+  },
+  dishCard: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: colors.cardBg,
     borderRadius: RADIUS.lg,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    ...SHADOW.small,
   },
-  itemLeft: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  thumbContainer: {
+  dishMedia: {
     width: 48,
     height: 48,
     borderRadius: RADIUS.md,
-    backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : '#F1F5F9',
+    backgroundColor: colors.creamDark,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
-    marginRight: 12,
   },
-  itemImage: {
+  dishThumb: {
     width: '100%',
     height: '100%',
   },
-  itemInfo: {
+  dishInfo: {
     flex: 1,
+    marginLeft: 12,
+    marginRight: 8,
   },
-  itemNameRow: {
+  dishTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     marginBottom: 2,
   },
-  itemName: {
-    ...FONTS.semibold,
+  dishName: {
     fontSize: 14.5,
+    ...FONTS.bold,
     color: colors.text,
     flex: 1,
   },
-  itemDesc: {
+  dishDesc: {
     fontSize: 11.5,
     color: colors.textMuted,
-    lineHeight: 16,
     marginBottom: 4,
   },
-  itemPrice: {
-    ...FONTS.heavy,
+  dishPrice: {
     fontSize: 15,
-    color: colors.saffron,
+    ...FONTS.heavy,
+    color: colors.text,
   },
-  itemRight: {
-    marginLeft: 10,
+  dishAction: {
+    alignItems: 'center',
   },
   addBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: colors.saffron,
-    borderRadius: RADIUS.full,
+    backgroundColor: colors.cardBg,
+    borderWidth: 1.5,
+    borderColor: colors.saffron,
+    borderRadius: RADIUS.md,
     paddingHorizontal: 14,
-    paddingVertical: 7,
-    ...SHADOW.small,
+    paddingVertical: 6,
   },
   addBtnText: {
-    ...FONTS.bold,
     fontSize: 12,
-    color: '#FFFFFF',
-    letterSpacing: 0.3,
+    ...FONTS.heavy,
+    color: colors.saffron,
   },
-  qtyRow: {
+  qtyCtrl: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.glass?.card || (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)'),
-    borderRadius: RADIUS.full,
-    padding: 2.5,
-    borderWidth: 1,
-    borderColor: colors.glass?.border || 'rgba(255,255,255,0.12)',
+    backgroundColor: colors.saffron,
+    borderRadius: RADIUS.md,
+    paddingHorizontal: 4,
+    paddingVertical: 3,
   },
   qtyBtn: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : '#FFFFFF',
+    width: 22,
+    height: 22,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  qtyBtnAdd: {
-    backgroundColor: colors.saffron,
-  },
   qtyNum: {
-    ...FONTS.bold,
-    fontSize: 13.5,
-    color: colors.text,
-    minWidth: 22,
+    fontSize: 13,
+    ...FONTS.heavy,
+    color: '#FFFFFF',
+    minWidth: 20,
     textAlign: 'center',
   },
   suggestionsContainer: {
@@ -542,7 +519,6 @@ const createStyles = (colors, isDark) => StyleSheet.create({
     ...FONTS.bold,
     fontSize: 15,
     color: colors.text,
-    letterSpacing: -0.2,
   },
   clearBtn: {
     ...FONTS.semibold,
@@ -558,21 +534,20 @@ const createStyles = (colors, isDark) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: colors.glass?.pill || (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'),
+    backgroundColor: colors.cardBg,
     borderRadius: RADIUS.full,
     paddingHorizontal: 12,
     paddingVertical: 7,
     borderWidth: 1,
-    borderColor: colors.glass?.pillBorder || 'rgba(255,255,255,0.1)',
+    borderColor: colors.border,
   },
   suggestionTagText: {
-    ...FONTS.medium,
     fontSize: 12.5,
     color: colors.textMuted,
   },
   popularTag: {
-    borderColor: isDark ? 'rgba(245,158,11,0.3)' : 'rgba(22,163,74,0.25)',
-    backgroundColor: isDark ? 'rgba(245,158,11,0.12)' : 'rgba(22,163,74,0.1)',
+    backgroundColor: colors.saffronPale,
+    borderColor: colors.saffron + '40',
   },
   popularTagText: {
     color: colors.saffron,

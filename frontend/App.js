@@ -76,20 +76,20 @@ function MainTabs() {
 
   const screenOpts = {
     tabBarStyle: {
-      backgroundColor: isDark ? 'rgba(15, 14, 18, 0.94)' : 'rgba(255, 255, 255, 0.94)',
-      borderTopColor: colors.glass?.border || (isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)'),
+      backgroundColor: colors.tabBarBg,
+      borderTopColor: colors.tabBarBorder,
       borderTopWidth: 1,
-      height: 64,
+      height: 62,
       paddingBottom: 8,
       paddingTop: 6,
-      elevation: 8,
+      elevation: 4,
     },
     tabBarActiveTintColor:   colors.saffron,
     tabBarInactiveTintColor: colors.tabInactive,
-    tabBarLabelStyle:        { ...FONTS.semibold, fontSize: 11 },
-    headerStyle:             { backgroundColor: isDark ? '#121113' : colors.brown },
-    headerTitleStyle:        { color: colors.white, ...FONTS.bold, fontSize: 18 },
-    headerTintColor:         colors.white,
+    tabBarLabelStyle:        { ...FONTS.bold, fontSize: 11 },
+    headerStyle:             { backgroundColor: colors.cardBg },
+    headerTitleStyle:        { color: colors.text, ...FONTS.heavy, fontSize: 18 },
+    headerTintColor:         colors.text,
     headerShadowVisible:     false,
   };
 
@@ -118,7 +118,7 @@ function MainTabs() {
       />
       <Tab.Screen name="Track" component={TrackScreen}
         options={{
-          title: 'Track Order',
+          title: 'Live Tracking',
           tabBarIcon: ({ focused }) => <TabIcon routeName="Track" focused={focused} colors={colors} />,
           tabBarLabel: 'Track',
         }}
@@ -145,25 +145,25 @@ function AuthStack() {
 }
 
 function AppStack() {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
 
   const commonHeader = {
-    headerStyle:          { backgroundColor: isDark ? '#121113' : colors.brown },
-    headerTitleStyle:     { color: colors.white, ...FONTS.bold },
-    headerTintColor:      colors.white,
+    headerStyle:          { backgroundColor: colors.cardBg },
+    headerTitleStyle:     { color: colors.text, ...FONTS.heavy },
+    headerTintColor:      colors.text,
     headerShadowVisible:  false,
   };
 
   return (
     <Stack.Navigator screenOptions={commonHeader}>
       <Stack.Screen name="MainTabs"      component={MainTabs}           options={{ headerShown: false }} />
-      <Stack.Screen name="Search"        component={SearchScreen}       options={{ title: 'Search' }} />
-      <Stack.Screen name="Favorites"     component={FavoritesScreen}    options={{ title: 'My Favourites' }} />
+      <Stack.Screen name="Search"        component={SearchScreen}       options={{ title: 'Search Dishes' }} />
+      <Stack.Screen name="Favorites"     component={FavoritesScreen}    options={{ title: 'My Favorites' }} />
       <Stack.Screen name="Addresses"     component={AddressesScreen}    options={{ title: 'Saved Addresses' }} />
-      <Stack.Screen name="AddAddress"    component={AddAddressScreen}   options={{ title: 'Add Address' }} />
-      <Stack.Screen name="Payment"       component={PaymentScreen}      options={{ title: 'Payment' }} />
+      <Stack.Screen name="AddAddress"    component={AddAddressScreen}   options={{ title: 'Add Delivery Address' }} />
+      <Stack.Screen name="Payment"       component={PaymentScreen}      options={{ title: 'Payment Options' }} />
       <Stack.Screen name="OrderDetail"   component={OrderDetailScreen}  options={{ title: 'Order Details' }} />
-      <Stack.Screen name="Review"        component={ReviewScreen}       options={{ title: 'Rate Your Order' }} />
+      <Stack.Screen name="Review"        component={ReviewScreen}       options={{ title: 'Rate Your Meal' }} />
       <Stack.Screen name="Notifications" component={NotificationsScreen} options={{ title: 'Notifications' }} />
       <Stack.Screen name="Coupon"        component={CouponScreen}       options={{ title: 'Apply Coupon' }} />
       <Stack.Screen name="Help"          component={HelpScreen}         options={{ headerShown: false }} />
@@ -191,12 +191,12 @@ function RootNavigator() {
 
   if (loading) {
     return (
-      <View style={[styles.splash, { backgroundColor: isDark ? '#09090B' : colors.brown }]}>
-        <StatusBar barStyle={colors.statusBarStyle} backgroundColor="transparent" translucent />
+      <View style={[styles.splash, { backgroundColor: colors.cardBg }]}>
+        <StatusBar barStyle={colors.statusBarStyle} backgroundColor={colors.cardBg} />
         <Ionicons name="flame" size={56} color={colors.saffron} />
-        <Text style={[styles.splashTitle, { color: colors.white }]}>Navedyam</Text>
-        <Text style={[styles.splashSub, { color: colors.turmeric }]}>CLOUD KITCHEN  ·  BHIWANI</Text>
-        <ActivityIndicator color={colors.saffronLight} style={{ marginTop: 32 }} size="large" />
+        <Text style={[styles.splashTitle, { color: colors.text }]}>Navedyam</Text>
+        <Text style={[styles.splashSub, { color: colors.saffron }]}>CLOUD KITCHEN · BHIWANI</Text>
+        <ActivityIndicator color={colors.saffron} style={{ marginTop: 24 }} size="large" />
       </View>
     );
   }
@@ -207,15 +207,15 @@ function RootNavigator() {
       ...(isDark ? DarkTheme.colors : DefaultTheme.colors),
       primary: colors.saffron,
       background: colors.cream,
-      card: isDark ? '#121113' : colors.brown,
+      card: colors.cardBg,
       text: colors.text,
-      border: colors.glass?.border || colors.border,
+      border: colors.border,
     },
   };
 
   return (
     <>
-      <StatusBar barStyle={colors.statusBarStyle} backgroundColor="transparent" translucent />
+      <StatusBar barStyle={colors.statusBarStyle} backgroundColor={colors.cardBg} />
       <NavigationContainer ref={navigationRef} theme={navTheme}>
         {user ? <AppStack /> : <AuthStack />}
       </NavigationContainer>
@@ -247,14 +247,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  splashTitle: { fontSize: 36, ...FONTS.heavy, letterSpacing: 1, marginTop: 16 },
-  splashSub:   { fontSize: 11, letterSpacing: 3, textTransform: 'uppercase', marginTop: 4 },
+  splashTitle: { fontSize: 32, ...FONTS.heavy, letterSpacing: 0.5, marginTop: 14 },
+  splashSub:   { fontSize: 11, letterSpacing: 2.5, textTransform: 'uppercase', marginTop: 4 },
   badge: {
-    position: 'absolute', top: -6, right: -12,
-    borderRadius: 10,
-    minWidth: 18, height: 18, alignItems: 'center',
-    justifyContent: 'center', paddingHorizontal: 4,
-    borderWidth: 2,
+    position: 'absolute', top: -5, right: -10,
+    borderRadius: 9,
+    minWidth: 17, height: 17, alignItems: 'center',
+    justifyContent: 'center', paddingHorizontal: 3,
+    borderWidth: 1.5,
   },
   badgeTxt: { fontSize: 9, ...FONTS.bold },
 });

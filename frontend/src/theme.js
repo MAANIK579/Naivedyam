@@ -1,42 +1,42 @@
-// src/theme.js — Light/Dark mode design system with Glassmorphic visual tokens
+// src/theme.js — Modern High-Contrast Culinary Design System (Light & Dark)
 
-// Light Mode Colors (Crisp pearl & frosted emerald/amber glass)
 export const LIGHT_COLORS = {
-  // Primary green tones
-  saffron:      '#16A34A',
-  saffronLight: '#22C55E',
-  saffronDeep:  '#166534',
-  saffronPale:  'rgba(22, 163, 74, 0.12)',
+  // Brand accents (Appetizing Saffron / Tangerine)
+  saffron:      '#EA580C',    // Vibrant warm saffron-orange
+  saffronLight: '#FB923C',
+  saffronDeep:  '#C2410C',
+  saffronPale:  '#FFF7ED',    // Orange-50 warm tint
 
-  // Background tones (light)
-  cream:        '#F8FAF8',
-  creamDark:    '#F1F5F2',
+  // Background tones
+  cream:        '#F8FAFC',    // Slate-50 clean canvas
+  creamDark:    '#F1F5F9',    // Slate-100 secondary surface
 
   // Accent colors
-  turmeric:     '#D97706',
+  turmeric:     '#D97706',    // Amber-600
 
-  // Brown / Dark Green tones
-  brown:        '#166534',
-  brownMid:     '#15803D',
-  brownLight:   '#22C55E',
+  // Neutral darks for text and headers
+  brown:        '#0F172A',    // Slate-900 header
+  brownMid:     '#1E293B',    // Slate-800
+  brownLight:   '#334155',    // Slate-700
 
-  // Green accents
-  green:        '#16A34A',
+  // Fresh green for pure veg & success
+  green:        '#16A34A',    // Emerald-600 pure veg
   greenLight:   '#22C55E',
-  greenPale:    'rgba(34, 197, 94, 0.12)',
+  greenPale:    '#DCFCE7',
 
-  // Text colors
-  text:         '#0F172A',
-  textMuted:    '#475569',    // Slate 600 — accessible readable muted text
-  textLight:    '#64748B',    // Slate 500 — secondary metadata
+  // High-contrast text
+  text:         '#0F172A',    // Slate-900 crisp primary text
+  textMuted:    '#64748B',    // Slate-500 secondary
+  textLight:    '#94A3B8',    // Slate-400 placeholder/meta
 
-  // Surface colors
+  // Surfaces
   white:        '#FFFFFF',
-  cardBg:       'rgba(255, 255, 255, 0.82)',
+  cardBg:       '#FFFFFF',
+  cardElevated: '#FFFFFF',
 
-  // Border colors
-  border:       'rgba(226, 232, 240, 0.85)',
-  borderLight:  'rgba(241, 245, 249, 0.9)',
+  // Crisp borders
+  border:       '#E2E8F0',    // Slate-200 clean border
+  borderLight:  '#F1F5F9',    // Slate-100 hairline divider
 
   // Status colors
   error:        '#DC2626',
@@ -44,115 +44,75 @@ export const LIGHT_COLORS = {
   success:      '#16A34A',
   successPale:  '#F0FDF4',
 
-  // Glassmorphism design tokens
-  glass: {
-    card:             'rgba(255, 255, 255, 0.84)',
-    cardElevated:     'rgba(255, 255, 255, 0.94)',
-    cardSubtle:       'rgba(255, 255, 255, 0.65)',
-    border:           'rgba(255, 255, 255, 0.9)',
-    borderSubtle:     'rgba(0, 0, 0, 0.07)',
-    highlight:        '#FFFFFF',
-    glow:             'rgba(22, 163, 74, 0.18)',
-    glowAmber:        'rgba(245, 158, 11, 0.18)',
-    pill:             'rgba(255, 255, 255, 0.78)',
-    pillBorder:       'rgba(0, 0, 0, 0.08)',
-    pillActive:       'rgba(22, 163, 74, 0.16)',
-    pillActiveBorder: 'rgba(22, 163, 74, 0.45)',
-    surface:          'rgba(255, 255, 255, 0.92)',
-    overlay:          'rgba(15, 23, 42, 0.45)',
-    orb1:             'rgba(34, 197, 94, 0.14)',
-    orb2:             'rgba(245, 158, 11, 0.12)',
-  },
-
-  // Overlay
-  overlay:      'rgba(15, 23, 42, 0.45)',
+  // Overlays
+  overlay:      'rgba(15, 23, 42, 0.65)',
 
   // Tab bar
-  tabBarBg:     'rgba(255, 255, 255, 0.92)',
-  tabBarBorder: 'rgba(226, 232, 240, 0.8)',
+  tabBarBg:     '#FFFFFF',
+  tabBarBorder: '#E2E8F0',
   tabInactive:  '#94A3B8',
 
   // Status bar
   statusBarStyle: 'dark-content',
 };
 
-// Dark Mode Colors (Deep Obsidian & Espresso with Glowing Amber & Emerald Glass)
 export const DARK_COLORS = {
-  // Primary accent (Appetizing Warm Amber/Saffron)
-  saffron:      '#F59E0B',
-  saffronLight: '#FBBF24',
-  saffronDeep:  '#D97706',
-  saffronPale:  'rgba(245, 158, 11, 0.16)',
+  // Brand accents (Luminous Saffron / Amber)
+  saffron:      '#F97316',    // Vibrant Orange-500
+  saffronLight: '#FB923C',
+  saffronDeep:  '#EA580C',
+  saffronPale:  '#431407',    // Deep warm amber tint
 
-  // Background tones (Deep Obsidian / Charcoal)
-  cream:        '#09090B',    // Zinc 950 - Deep rich obsidian
-  creamDark:    '#131215',    // Base elevated surface
+  // Background tones (Deep Obsidian & Charcoal)
+  cream:        '#09090B',    // Zinc-950 deep pure canvas
+  creamDark:    '#18181B',    // Zinc-900 elevated surface
 
   // Accent colors
-  turmeric:     '#FCD34D',    // Amber 300 - luminous highlight
+  turmeric:     '#FBBF24',    // Warm Amber
 
-  // Rich dark tones (Surfaces and headers)
-  brown:        '#121113',    // Dark obsidian header
-  brownMid:     '#1C1A1D',    // Secondary cards
-  brownLight:   '#28262B',    // Hover/Pressed state
+  // Header & section tones
+  brown:        '#09090B',
+  brownMid:     '#18181B',
+  brownLight:   '#27272A',
 
-  // Green accents (Keep for veg badges, success states)
-  green:        '#22C55E',
+  // Fresh green for pure veg & success
+  green:        '#22C55E',    // Bright Emerald
   greenLight:   '#4ADE80',
-  greenPale:    'rgba(34, 197, 94, 0.14)',
+  greenPale:    '#052E16',
 
-  // Text colors (Crisp luminous off-whites)
-  text:         '#FFFBF5',
-  textMuted:    '#A1A1AA',    // Zinc 400
-  textLight:    '#71717A',    // Zinc 500
+  // High-contrast text
+  text:         '#FAFAFA',    // Zinc-50 bright, ultra-crisp
+  textMuted:    '#A1A1AA',    // Zinc-400
+  textLight:    '#71717A',    // Zinc-500
 
-  // Surface colors
+  // Surfaces (Solid, high-contrast cards)
   white:        '#FFFFFF',
-  cardBg:       'rgba(255, 255, 255, 0.065)',
+  cardBg:       '#18181B',    // Zinc-900 solid card
+  cardElevated: '#27272A',    // Zinc-800 elevated card
 
-  // Border colors
-  border:       'rgba(255, 255, 255, 0.12)',
-  borderLight:  'rgba(255, 255, 255, 0.08)',
+  // Clean borders
+  border:       '#27272A',    // Zinc-800
+  borderLight:  '#3F3F46',    // Zinc-700
 
   // Status colors
   error:        '#EF4444',
-  errorPale:    'rgba(239, 68, 68, 0.16)',
+  errorPale:    '#450A0A',
   success:      '#22C55E',
-  successPale:  'rgba(34, 197, 94, 0.16)',
+  successPale:  '#052E16',
 
-  // Glassmorphism design tokens
-  glass: {
-    card:             'rgba(255, 255, 255, 0.07)',
-    cardElevated:     'rgba(255, 255, 255, 0.11)',
-    cardSubtle:       'rgba(255, 255, 255, 0.04)',
-    border:           'rgba(255, 255, 255, 0.14)',
-    borderSubtle:     'rgba(255, 255, 255, 0.07)',
-    highlight:        'rgba(255, 255, 255, 0.28)',
-    glow:             'rgba(245, 158, 11, 0.25)',
-    glowAmber:        'rgba(245, 158, 11, 0.25)',
-    pill:             'rgba(255, 255, 255, 0.08)',
-    pillBorder:       'rgba(255, 255, 255, 0.14)',
-    pillActive:       'rgba(245, 158, 11, 0.22)',
-    pillActiveBorder: 'rgba(245, 158, 11, 0.55)',
-    surface:          'rgba(18, 17, 19, 0.94)',
-    overlay:          'rgba(0, 0, 0, 0.75)',
-    orb1:             'rgba(245, 158, 11, 0.2)',
-    orb2:             'rgba(22, 163, 74, 0.14)',
-  },
-
-  // Overlay
+  // Overlays
   overlay:      'rgba(0, 0, 0, 0.75)',
 
   // Tab bar
-  tabBarBg:     'rgba(18, 17, 19, 0.92)',
-  tabBarBorder: 'rgba(255, 255, 255, 0.1)',
+  tabBarBg:     '#121114',
+  tabBarBorder: '#27272A',
   tabInactive:  '#71717A',
 
   // Status bar
   statusBarStyle: 'light-content',
 };
 
-// Default to dark colors for backward compatibility
+// Default colors
 export const COLORS = DARK_COLORS;
 
 export const FONTS = {
@@ -160,7 +120,7 @@ export const FONTS = {
   medium:   { fontFamily: 'System', fontWeight: '500' },
   semibold: { fontFamily: 'System', fontWeight: '600' },
   bold:     { fontFamily: 'System', fontWeight: '700' },
-  heavy:    { fontFamily: 'System', fontWeight: '900' },
+  heavy:    { fontFamily: 'System', fontWeight: '800' },
 };
 
 export const SPACING = {
@@ -174,76 +134,35 @@ export const SPACING = {
 };
 
 export const RADIUS = {
+  xs: 6,
   sm: 8,
   md: 12,
-  lg: 18,
-  xl: 24,
-  xxl: 32,
+  lg: 16,
+  xl: 20,
+  xxl: 28,
   full: 999,
 };
 
 export const SHADOW = {
   small: {
     shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
     elevation: 2,
   },
   medium: {
     shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.18,
-    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
     elevation: 4,
   },
   large: {
     shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.25,
-    shadowRadius: 24,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.18,
+    shadowRadius: 16,
     elevation: 8,
   },
-  glassGlow: {
-    shadowColor: '#F59E0B',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.28,
-    shadowRadius: 18,
-    elevation: 6,
-  },
 };
-
-/**
- * Creates standard glassmorphic card styles
- */
-export function getGlassCardStyle(colors, isDark, options = {}) {
-  const {
-    elevated = false,
-    radius = RADIUS.lg,
-    padding = SPACING.lg,
-    withHighlight = true,
-  } = options;
-
-  const bg = elevated
-    ? (colors.glass?.cardElevated || (isDark ? 'rgba(255,255,255,0.11)' : 'rgba(255,255,255,0.94)'))
-    : (colors.glass?.card || (isDark ? 'rgba(255,255,255,0.07)' : 'rgba(255,255,255,0.84)'));
-
-  const borderColor = colors.glass?.border || (isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.08)');
-  const borderTopColor = withHighlight
-    ? (colors.glass?.highlight || (isDark ? 'rgba(255,255,255,0.28)' : '#FFFFFF'))
-    : borderColor;
-
-  return {
-    backgroundColor: bg,
-    borderRadius: radius,
-    borderWidth: 1,
-    borderColor,
-    borderTopColor,
-    padding,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: elevated ? 6 : 3 },
-    shadowOpacity: isDark ? 0.35 : 0.08,
-    shadowRadius: elevated ? 16 : 8,
-    elevation: elevated ? 5 : 2,
-  };
-}
