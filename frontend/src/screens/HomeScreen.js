@@ -7,13 +7,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { useTheme } from '../context/ThemeContext';
-
+import { AmbientGlow, GlassCard } from '../components';
 import { FONTS, RADIUS, SHADOW } from '../theme';
 import api from '../api/client';
 
 export default function HomeScreen({ navigation }) {
   const { user } = useAuth();
-  const { applyCoupon } = useCart();
   const { colors, isDark } = useTheme();
   const firstName = user?.name?.split(' ')[0] || 'Guest';
   const [refreshing, setRefreshing] = useState(false);
@@ -26,12 +25,12 @@ export default function HomeScreen({ navigation }) {
   const scaleAnim = React.useRef(new Animated.Value(1)).current;
 
   const QUICK_CATS = [
-    { id: 'thali',     label: 'Thali',     icon: 'grid-outline',       bg: isDark ? colors.saffronPale : '#DCFCE7' },
-    { id: 'dal-sabzi', label: 'Dal Sabzi', icon: 'leaf-outline',       bg: isDark ? colors.saffronPale : '#D1FAE5' },
-    { id: 'roti',      label: 'Roti',      icon: 'pizza-outline',      bg: isDark ? colors.saffronPale : '#DCFCE7' },
-    { id: 'nonveg',    label: 'Non-Veg',   icon: 'flame-outline',      bg: isDark ? colors.saffronPale : '#FEE2E2' },
-    { id: 'snacks',    label: 'Snacks',    icon: 'cafe-outline',       bg: isDark ? colors.saffronPale : '#DCFCE7' },
-    { id: 'dessert',   label: 'Dessert',   icon: 'ice-cream-outline',  bg: isDark ? colors.saffronPale : '#DCFCE7' },
+    { id: 'thali',     label: 'Thali',     icon: 'grid-outline',      emoji: '🍛' },
+    { id: 'dal-sabzi', label: 'Dal Sabzi', icon: 'leaf-outline',      emoji: '🥘' },
+    { id: 'roti',      label: 'Roti',      icon: 'pizza-outline',     emoji: '🫓' },
+    { id: 'nonveg',    label: 'Special',   icon: 'flame-outline',     emoji: '🍲' },
+    { id: 'snacks',    label: 'Snacks',    icon: 'cafe-outline',      emoji: '🥟' },
+    { id: 'dessert',   label: 'Dessert',   icon: 'ice-cream-outline', emoji: '🍨' },
   ];
 
   async function onRefresh() {
@@ -48,7 +47,7 @@ export default function HomeScreen({ navigation }) {
           tag: item.tags?.[0] || 'Popular',
         })));
       }
-    } catch (err) {}
+    } catch (_) {}
     setRefreshing(false);
   }
 
@@ -59,8 +58,8 @@ export default function HomeScreen({ navigation }) {
   useEffect(() => {
     const pulse = Animated.loop(
       Animated.sequence([
-        Animated.timing(scaleAnim, { toValue: 1.02, duration: 1000, useNativeDriver: true }),
-        Animated.timing(scaleAnim, { toValue: 1, duration: 1000, useNativeDriver: true }),
+        Animated.timing(scaleAnim, { toValue: 1.025, duration: 1200, useNativeDriver: true }),
+        Animated.timing(scaleAnim, { toValue: 1, duration: 1200, useNativeDriver: true }),
       ])
     );
     pulse.start();
@@ -70,281 +69,543 @@ export default function HomeScreen({ navigation }) {
   const styles = createStyles(colors, isDark);
 
   return (
-    <ScrollView
-      style={styles.screen}
-      showsVerticalScrollIndicator={false}
-      refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={onRefresh}
-          colors={[colors.saffron]}
-          tintColor={colors.saffron}
-        />
-      }
-    >
-      <StatusBar barStyle={colors.statusBarStyle} backgroundColor={colors.brown} />
+    <View style={styles.container}>
+      <StatusBar barStyle={colors.statusBarStyle} backgroundColor="transparent" translucent />
+      <AmbientGlow />
 
-      {/* Hero */}
-      <View style={styles.hero}>
-        <View style={styles.heroHeader}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.greeting}>Namaskar, {firstName}!</Text>
-            <Text style={styles.heroTitle}>Ghar Ka Swaad,{'\n'}Seedha Aapke Darwaze</Text>
-          </View>
-          <TouchableOpacity
-            style={styles.notifBtn}
-            onPress={() => navigation.navigate('Notifications')}
-          >
-            <Ionicons name="notifications-outline" size={22} color={colors.white} />
-          </TouchableOpacity>
-        </View>
-
-        <Text style={styles.heroSub}>Authentic Haryanvi food · Bhiwani</Text>
-
-        {/* Search Bar */}
-        <TouchableOpacity
-          style={styles.searchBar}
-          onPress={() => navigation.navigate('Search')}
-          activeOpacity={0.9}
-        >
-          <Ionicons name="search-outline" size={18} color={colors.textMuted} />
-          <Text style={styles.searchPlaceholder}>Search for thali, dal, roti...</Text>
-        </TouchableOpacity>
-
-        <View style={styles.statsRow}>
-          {[
-            { icon: 'time-outline',        val: '30-45', lbl: 'Min Delivery' },
-            { icon: 'star-outline',         val: '4.8',  lbl: 'Rating' },
-            { icon: 'bag-check-outline',    val: '2000+', lbl: 'Orders' },
-          ].map(s => (
-            <View key={s.lbl} style={styles.stat}>
-              <Ionicons name={s.icon} size={16} color={colors.saffronLight} style={{ marginBottom: 2 }} />
-              <Text style={styles.statNum}>{s.val}</Text>
-              <Text style={styles.statLbl}>{s.lbl}</Text>
-            </View>
-          ))}
-        </View>
-
-        <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
-          <TouchableOpacity
-            style={styles.orderNowBtn}
-            onPress={() => navigation.navigate('Menu')}
-            activeOpacity={0.85}
-          >
-            <Ionicons name="restaurant-outline" size={20} color={colors.white} />
-            <Text style={styles.orderNowText}>Order Now</Text>
-            <Ionicons name="arrow-forward" size={18} color={colors.white} />
-          </TouchableOpacity>
-        </Animated.View>
-      </View>
-
-      <View style={styles.body}>
-        {/* Quick categories */}
-        <Text style={styles.sectionLabel}>What are you craving?</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 24 }}>
-          {QUICK_CATS.map(cat => (
-            <TouchableOpacity
-              key={cat.id}
-              style={styles.catChip}
-              onPress={() => navigation.navigate('Menu', { category: cat.id })}
-              activeOpacity={0.8}
-            >
-              <View style={[styles.catIconWrap, { backgroundColor: cat.bg }]}>
-                <Ionicons name={cat.icon} size={22} color={isDark ? colors.green : colors.brown} />
+      <ScrollView
+        style={styles.screen}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[colors.saffron]}
+            tintColor={colors.saffron}
+          />
+        }
+      >
+        {/* Glassmorphic Hero Banner */}
+        <View style={styles.heroWrapper}>
+          <GlassCard elevated style={styles.heroGlass}>
+            <View style={styles.heroHeader}>
+              <View style={{ flex: 1 }}>
+                <View style={styles.greetingBadge}>
+                  <Ionicons name="sparkles" size={13} color={colors.turmeric} />
+                  <Text style={styles.greeting}>Namaskar, {firstName}</Text>
+                </View>
+                <Text style={styles.heroTitle}>Ghar Ka Swaad,{'\n'}Seedha Aapke Darwaze</Text>
               </View>
-              <Text style={styles.catLabel}>{cat.label}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+              <TouchableOpacity
+                style={styles.notifBtn}
+                onPress={() => navigation.navigate('Notifications')}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="notifications-outline" size={20} color={colors.text} />
+              </TouchableOpacity>
+            </View>
 
-        {/* Popular Items */}
-        <View style={styles.popularSection}>
+            <Text style={styles.heroSub}>Authentic Haryanvi home meals · Bhiwani, Haryana</Text>
+
+            {/* Frosted Search Bar */}
+            <TouchableOpacity
+              style={styles.searchBar}
+              onPress={() => navigation.navigate('Search')}
+              activeOpacity={0.88}
+            >
+              <View style={styles.searchIconWrap}>
+                <Ionicons name="search-outline" size={16} color={colors.saffron} />
+              </View>
+              <Text style={styles.searchPlaceholder}>Search for thali, dal makhani, roti...</Text>
+              <Ionicons name="options-outline" size={16} color={colors.textLight} />
+            </TouchableOpacity>
+
+            {/* Quick Stats Glass Pills */}
+            <View style={styles.statsRow}>
+              {[
+                { icon: 'time-outline',     val: '30-45', lbl: 'Mins' },
+                { icon: 'star',             val: '4.8★',  lbl: 'Rating' },
+                { icon: 'shield-checkmark', val: '100%',  lbl: 'Pure Veg' },
+              ].map(s => (
+                <View key={s.lbl} style={styles.statPill}>
+                  <Ionicons name={s.icon} size={14} color={colors.saffron} />
+                  <Text style={styles.statNum}>{s.val}</Text>
+                  <Text style={styles.statLbl}>{s.lbl}</Text>
+                </View>
+              ))}
+            </View>
+
+            {/* Order Now Glowing Button */}
+            <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+              <TouchableOpacity
+                style={styles.orderNowBtn}
+                onPress={() => navigation.navigate('Menu')}
+                activeOpacity={0.85}
+              >
+                <Ionicons name="restaurant" size={18} color="#FFFFFF" />
+                <Text style={styles.orderNowText}>Order Now</Text>
+                <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
+              </TouchableOpacity>
+            </Animated.View>
+          </GlassCard>
+        </View>
+
+        {/* Content Body */}
+        <View style={styles.body}>
+          {/* Quick Categories */}
           <View style={styles.sectionHeaderRow}>
-            <Text style={styles.sectionLabel}>Popular Right Now</Text>
+            <Text style={styles.sectionLabel}>What are you craving?</Text>
             <TouchableOpacity onPress={() => navigation.navigate('Menu')}>
-              <Text style={styles.seeAll}>See all</Text>
+              <Text style={styles.seeAll}>View all</Text>
             </TouchableOpacity>
           </View>
-          <ScrollView 
-            horizontal 
+
+          <ScrollView
+            horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingVertical: 12, paddingRight: 16 }}
+            contentContainerStyle={styles.catsContainer}
           >
-            {popularItems.map(item => (
+            {QUICK_CATS.map(cat => (
               <TouchableOpacity
-                key={item.id}
-                style={styles.popularCard}
-                onPress={() => navigation.navigate('Menu')}
-                activeOpacity={0.88}
+                key={cat.id}
+                style={styles.catCard}
+                onPress={() => navigation.navigate('Menu', { category: cat.id })}
+                activeOpacity={0.8}
               >
-                <View style={styles.popularMedia}>
-                  {item.image_url ? (
-                    <Image
-                      source={{ uri: item.image_url }}
-                      style={styles.popularImage}
-                      resizeMode="cover"
-                    />
-                  ) : (
-                    <View style={styles.emojiFallback}>
-                      <Text style={styles.popularEmoji}>{item.emoji}</Text>
-                    </View>
-                  )}
-                  {item.tag && (
-                    <View style={styles.popularTag}>
-                      <Text style={styles.popularTagText}>{item.tag}</Text>
-                    </View>
-                  )}
+                <View style={styles.catSquircle}>
+                  <Text style={styles.catEmoji}>{cat.emoji}</Text>
                 </View>
-                <View style={styles.popularContent}>
-                  <Text style={styles.popularName} numberOfLines={1}>{item.name}</Text>
-                  <View style={styles.popularBottomRow}>
-                    <Text style={styles.popularPrice}>₹{item.price}</Text>
-                    <View style={styles.addMiniBtn}>
-                      <Ionicons name="add" size={14} color={colors.white} />
-                    </View>
-                  </View>
-                </View>
+                <Text style={styles.catLabel}>{cat.label}</Text>
               </TouchableOpacity>
             ))}
           </ScrollView>
-        </View>
 
-        {/* Quick Actions */}
-        <View style={styles.quickActions}>
-          <TouchableOpacity
-            style={[styles.quickAction, { backgroundColor: isDark ? colors.saffronPale : '#DCFCE7' }]}
-            onPress={() => navigation.navigate('Profile')}
-          >
-            <Ionicons name="time-outline" size={24} color={colors.saffron} />
-            <Text style={styles.quickActionText}>Order History</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.quickAction, { backgroundColor: isDark ? colors.saffronPale : '#D1FAE5' }]}
-            onPress={() => navigation.navigate('Favorites')}
-          >
-            <Ionicons name="heart-outline" size={24} color={colors.saffron} />
-            <Text style={styles.quickActionText}>Favorites</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.quickAction, { backgroundColor: isDark ? colors.saffronPale : '#DCFCE7' }]}
-            onPress={() => navigation.navigate('Coupon')}
-          >
-            <Ionicons name="pricetag-outline" size={24} color={colors.saffron} />
-            <Text style={styles.quickActionText}>Coupons</Text>
-          </TouchableOpacity>
-        </View>
+          {/* Popular Items Showcase */}
+          <View style={styles.popularSection}>
+            <View style={styles.sectionHeaderRow}>
+              <View>
+                <Text style={styles.sectionLabel}>Popular Right Now</Text>
+                <Text style={styles.sectionSublabel}>Freshly cooked local favorites</Text>
+              </View>
+              <TouchableOpacity onPress={() => navigation.navigate('Menu')}>
+                <Text style={styles.seeAll}>See all</Text>
+              </TouchableOpacity>
+            </View>
 
-        {/* Footer */}
-        <View style={styles.footer}>
-          <Ionicons name="leaf-outline" size={16} color={colors.green} style={{ marginBottom: 6 }} />
-          <Text style={styles.footerText}>Pure ingredients · Made fresh daily · Bhiwani, Haryana</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.popularList}
+            >
+              {popularItems.map(item => (
+                <GlassCard
+                  key={item.id}
+                  style={styles.popularCard}
+                  onPress={() => navigation.navigate('Menu')}
+                  padding={0}
+                >
+                  <View style={styles.popularMedia}>
+                    {item.image_url ? (
+                      <Image
+                        source={{ uri: item.image_url }}
+                        style={styles.popularImage}
+                        resizeMode="cover"
+                      />
+                    ) : (
+                      <View style={styles.emojiFallback}>
+                        <Text style={styles.popularEmoji}>{item.emoji}</Text>
+                      </View>
+                    )}
+                    {item.tag && (
+                      <View style={styles.popularTagPill}>
+                        <Text style={styles.popularTagText}>{item.tag}</Text>
+                      </View>
+                    )}
+                  </View>
+
+                  <View style={styles.popularContent}>
+                    <Text style={styles.popularName} numberOfLines={1}>{item.name}</Text>
+                    <View style={styles.popularBottomRow}>
+                      <Text style={styles.popularPrice}>₹{item.price}</Text>
+                      <View style={styles.addMiniBtn}>
+                        <Ionicons name="add" size={16} color="#FFFFFF" />
+                      </View>
+                    </View>
+                  </View>
+                </GlassCard>
+              ))}
+            </ScrollView>
+          </View>
+
+          {/* Quick Actions Frosted Grid */}
+          <View style={styles.quickActions}>
+            <GlassCard
+              style={styles.quickAction}
+              onPress={() => navigation.navigate('Profile')}
+              padding={12}
+            >
+              <View style={[styles.actionIconWrap, { backgroundColor: isDark ? 'rgba(245,158,11,0.18)' : 'rgba(22,163,74,0.12)' }]}>
+                <Ionicons name="receipt-outline" size={20} color={colors.saffron} />
+              </View>
+              <Text style={styles.quickActionText}>My Orders</Text>
+            </GlassCard>
+
+            <GlassCard
+              style={styles.quickAction}
+              onPress={() => navigation.navigate('Favorites')}
+              padding={12}
+            >
+              <View style={[styles.actionIconWrap, { backgroundColor: isDark ? 'rgba(239,68,68,0.18)' : 'rgba(239,68,68,0.12)' }]}>
+                <Ionicons name="heart" size={20} color={colors.error} />
+              </View>
+              <Text style={styles.quickActionText}>Favorites</Text>
+            </GlassCard>
+
+            <GlassCard
+              style={styles.quickAction}
+              onPress={() => navigation.navigate('Coupon')}
+              padding={12}
+            >
+              <View style={[styles.actionIconWrap, { backgroundColor: isDark ? 'rgba(34,197,94,0.18)' : 'rgba(34,197,94,0.12)' }]}>
+                <Ionicons name="pricetag" size={20} color={colors.green} />
+              </View>
+              <Text style={styles.quickActionText}>Coupons</Text>
+            </GlassCard>
+          </View>
+
+          {/* Footer Glass Pill */}
+          <GlassCard subtle style={styles.footerCard} padding={16}>
+            <View style={styles.footerRow}>
+              <View style={styles.leafIconBadge}>
+                <Ionicons name="leaf" size={15} color={colors.green} />
+              </View>
+              <Text style={styles.footerText}>
+                Handcrafted with pure desi ghee & fresh local produce.{'\n'}
+                Prepared fresh for every single order in Bhiwani.
+              </Text>
+            </View>
+          </GlassCard>
         </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }
 
 const createStyles = (colors, isDark) => StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.cream },
-  hero: {
-    backgroundColor: colors.brown,
-    padding: 24, paddingTop: 52, paddingBottom: 28,
+  container: {
+    flex: 1,
+    backgroundColor: colors.cream,
+  },
+  screen: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 40,
+  },
+  heroWrapper: {
+    paddingHorizontal: 16,
+    paddingTop: 54,
+  },
+  heroGlass: {
+    borderRadius: RADIUS.xl,
+    padding: 20,
+    overflow: 'hidden',
   },
   heroHeader: {
-    flexDirection: 'row', alignItems: 'flex-start', gap: 12,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
   },
-  greeting: { color: colors.turmeric, fontSize: 14, ...FONTS.medium, letterSpacing: 0.5 },
-  heroTitle: { color: colors.white, fontSize: 26, ...FONTS.heavy, marginTop: 6, lineHeight: 34 },
-  heroSub:   { color: isDark ? colors.textMuted : colors.greenPale, fontSize: 13, marginTop: 4, marginBottom: 18 },
+  greetingBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 4,
+  },
+  greeting: {
+    color: colors.turmeric,
+    fontSize: 13,
+    ...FONTS.semibold,
+    letterSpacing: 0.5,
+  },
+  heroTitle: {
+    color: colors.text,
+    fontSize: 24,
+    ...FONTS.heavy,
+    lineHeight: 32,
+    letterSpacing: -0.4,
+  },
+  heroSub: {
+    color: colors.textMuted,
+    fontSize: 12.5,
+    marginTop: 6,
+    marginBottom: 16,
+  },
   notifBtn: {
-    width: 42, height: 42, borderRadius: 21,
-    backgroundColor: isDark ? colors.borderLight : 'rgba(255,255,255,0.1)',
-    alignItems: 'center', justifyContent: 'center',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.glass?.pill || (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)'),
+    borderWidth: 1,
+    borderColor: colors.glass?.border || 'rgba(255,255,255,0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   searchBar: {
-    flexDirection: 'row', alignItems: 'center', gap: 10,
-    backgroundColor: isDark ? colors.border : 'rgba(255,255,255,0.1)',
-    borderRadius: RADIUS.md, padding: 14,
-    borderWidth: 1, borderColor: isDark ? colors.borderLight : 'rgba(255,255,255,0.12)',
-    marginBottom: 20,
-  },
-  searchPlaceholder: { color: colors.textLight, fontSize: 14, ...FONTS.regular },
-  statsRow: { flexDirection: 'row', justifyContent: 'space-around', marginBottom: 22 },
-  stat:     { alignItems: 'center' },
-  statNum:  { color: colors.saffronLight, fontSize: 20, ...FONTS.bold },
-  statLbl:  { color: colors.textMuted, fontSize: 10, textTransform: 'uppercase', letterSpacing: 1, marginTop: 1 },
-  orderNowBtn: {
-    backgroundColor: colors.saffron, borderRadius: RADIUS.md,
-    paddingVertical: 14, alignItems: 'center', ...SHADOW.medium,
-    flexDirection: 'row', justifyContent: 'center', gap: 10,
-  },
-  orderNowText: { color: colors.white, fontSize: 16, ...FONTS.bold },
-  body: { padding: 20, paddingTop: 24 },
-  sectionLabel: { fontSize: 18, ...FONTS.bold, color: colors.text, marginBottom: 14 },
-  sectionHeaderRow: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14,
-  },
-  seeAll: { fontSize: 14, ...FONTS.semibold, color: colors.saffron },
-  catChip: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginRight: 12, minWidth: 72,
+    backgroundColor: colors.glass?.card || (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.85)'),
+    borderRadius: RADIUS.full,
+    paddingHorizontal: 14,
+    paddingVertical: 11,
+    borderWidth: 1,
+    borderColor: colors.glass?.border || 'rgba(255,255,255,0.12)',
+    borderTopColor: colors.glass?.highlight || 'rgba(255,255,255,0.25)',
+    marginBottom: 16,
+    gap: 10,
   },
-  catIconWrap: {
-    width: 56, height: 56, borderRadius: 16,
-    alignItems: 'center', justifyContent: 'center',
-    marginBottom: 6, ...SHADOW.small,
+  searchIconWrap: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: isDark ? 'rgba(245,158,11,0.15)' : 'rgba(22,163,74,0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  catLabel: { fontSize: 12, ...FONTS.semibold, color: colors.text },
-  popularSection: { marginBottom: 28 },
+  searchPlaceholder: {
+    flex: 1,
+    color: colors.textLight,
+    fontSize: 13.5,
+    ...FONTS.regular,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 18,
+    gap: 8,
+  },
+  statPill: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.glass?.pill || (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.65)'),
+    borderRadius: RADIUS.full,
+    paddingVertical: 7,
+    paddingHorizontal: 10,
+    borderWidth: 1,
+    borderColor: colors.glass?.pillBorder || 'rgba(255,255,255,0.1)',
+    gap: 5,
+  },
+  statNum: {
+    color: colors.text,
+    fontSize: 12,
+    ...FONTS.bold,
+  },
+  statLbl: {
+    color: colors.textMuted,
+    fontSize: 10,
+    ...FONTS.medium,
+  },
+  orderNowBtn: {
+    backgroundColor: colors.saffron,
+    borderRadius: RADIUS.lg,
+    paddingVertical: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    ...SHADOW.glassGlow,
+  },
+  orderNowText: {
+    color: '#FFFFFF',
+    fontSize: 15.5,
+    ...FONTS.bold,
+    letterSpacing: 0.3,
+  },
+  body: {
+    paddingHorizontal: 16,
+    paddingTop: 24,
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    marginBottom: 14,
+  },
+  sectionLabel: {
+    fontSize: 18,
+    ...FONTS.bold,
+    color: colors.text,
+    letterSpacing: -0.3,
+  },
+  sectionSublabel: {
+    fontSize: 12,
+    color: colors.textMuted,
+    marginTop: 2,
+  },
+  seeAll: {
+    fontSize: 13.5,
+    ...FONTS.semibold,
+    color: colors.saffron,
+  },
+  catsContainer: {
+    paddingRight: 16,
+    gap: 14,
+    paddingBottom: 22,
+  },
+  catCard: {
+    alignItems: 'center',
+    width: 66,
+  },
+  catSquircle: {
+    width: 58,
+    height: 58,
+    borderRadius: 18,
+    backgroundColor: colors.glass?.card || (isDark ? 'rgba(255,255,255,0.07)' : 'rgba(255,255,255,0.85)'),
+    borderWidth: 1,
+    borderColor: colors.glass?.border || 'rgba(255,255,255,0.12)',
+    borderTopColor: colors.glass?.highlight || 'rgba(255,255,255,0.25)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 7,
+    ...SHADOW.small,
+  },
+  catEmoji: {
+    fontSize: 26,
+  },
+  catLabel: {
+    fontSize: 11.5,
+    ...FONTS.semibold,
+    color: colors.text,
+    textAlign: 'center',
+  },
+  popularSection: {
+    marginBottom: 24,
+  },
+  popularList: {
+    paddingVertical: 6,
+    paddingRight: 16,
+    gap: 14,
+  },
   popularCard: {
-    width: 164, backgroundColor: colors.cardBg, borderRadius: RADIUS.lg,
-    marginRight: 14, overflow: 'hidden',
-    borderWidth: 1, borderColor: colors.borderLight, ...SHADOW.small,
+    width: 172,
+    borderRadius: RADIUS.lg,
+    overflow: 'hidden',
   },
   popularMedia: {
-    width: '100%', height: 104,
-    backgroundColor: isDark ? colors.border : '#F3F4F6',
-    position: 'relative', overflow: 'hidden',
+    width: '100%',
+    height: 116,
+    backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : '#F1F5F9',
+    position: 'relative',
+    overflow: 'hidden',
   },
-  popularImage: { width: '100%', height: '100%' },
+  popularImage: {
+    width: '100%',
+    height: '100%',
+  },
   emojiFallback: {
-    width: '100%', height: '100%',
-    alignItems: 'center', justifyContent: 'center',
-    backgroundColor: isDark ? colors.creamDark : '#F8FAF9',
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  popularEmoji: { fontSize: 40 },
-  popularTag: {
-    position: 'absolute', top: 7, left: 7,
-    backgroundColor: colors.saffron, paddingHorizontal: 7, paddingVertical: 2.5,
-    borderRadius: RADIUS.sm,
+  popularEmoji: {
+    fontSize: 44,
   },
-  popularTagText: { fontSize: 8.5, ...FONTS.bold, color: '#FFFFFF', textTransform: 'uppercase', letterSpacing: 0.4 },
-  popularContent: { padding: 11 },
-  popularName: { fontSize: 13.5, ...FONTS.semibold, color: colors.text },
-  popularBottomRow: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    marginTop: 6,
-  },
-  popularPrice: { fontSize: 15, ...FONTS.bold, color: colors.saffron },
-  addMiniBtn: {
-    width: 24, height: 24, borderRadius: 6,
+  popularTagPill: {
+    position: 'absolute',
+    top: 8,
+    left: 8,
     backgroundColor: colors.saffron,
-    alignItems: 'center', justifyContent: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: RADIUS.full,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
+  popularTagText: {
+    fontSize: 9,
+    ...FONTS.bold,
+    color: '#FFFFFF',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  popularContent: {
+    padding: 12,
+  },
+  popularName: {
+    fontSize: 14,
+    ...FONTS.semibold,
+    color: colors.text,
+    letterSpacing: -0.2,
+  },
+  popularBottomRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  popularPrice: {
+    fontSize: 16,
+    ...FONTS.bold,
+    color: colors.saffron,
+  },
+  addMiniBtn: {
+    width: 26,
+    height: 26,
+    borderRadius: 8,
+    backgroundColor: colors.saffron,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...SHADOW.small,
   },
   quickActions: {
-    flexDirection: 'row', justifyContent: 'space-between', marginBottom: 24, gap: 10,
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 24,
   },
   quickAction: {
-    flex: 1, alignItems: 'center', paddingVertical: 14, paddingHorizontal: 6,
-    borderRadius: RADIUS.lg, borderWidth: 1,
-    borderColor: isDark ? colors.border : 'rgba(34,197,94,0.18)',
-    gap: 6, ...SHADOW.small,
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: RADIUS.lg,
+    gap: 8,
   },
-  quickActionText: { fontSize: 11, ...FONTS.semibold, color: colors.text, textAlign: 'center' },
-  footer: {
-    marginTop: 8, padding: 16,
-    backgroundColor: colors.creamDark, borderRadius: RADIUS.lg, alignItems: 'center',
-    borderWidth: 1, borderColor: colors.borderLight,
+  actionIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  footerText: { color: colors.textMuted, fontSize: 12, textAlign: 'center', lineHeight: 18 },
+  quickActionText: {
+    fontSize: 12,
+    ...FONTS.semibold,
+    color: colors.text,
+    textAlign: 'center',
+  },
+  footerCard: {
+    borderRadius: RADIUS.xl,
+  },
+  footerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  leafIconBadge: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: isDark ? 'rgba(34,197,94,0.18)' : 'rgba(22,163,74,0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  footerText: {
+    flex: 1,
+    color: colors.textMuted,
+    fontSize: 11.5,
+    lineHeight: 17,
+  },
 });

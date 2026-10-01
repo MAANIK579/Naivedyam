@@ -55,14 +55,14 @@ const TAB_ICONS = {
 function TabIcon({ routeName, focused, badgeCount, colors }) {
   const icons = TAB_ICONS[routeName] || TAB_ICONS.Home;
   const iconName = focused ? icons.focused : icons.unfocused;
-  const color = focused ? colors.saffronLight : colors.tabInactive;
+  const color = focused ? colors.saffron : colors.tabInactive;
 
   return (
     <View style={{ alignItems: 'center', position: 'relative' }}>
-      <Ionicons name={iconName} size={24} color={color} />
+      <Ionicons name={iconName} size={22} color={color} />
       {badgeCount > 0 && (
         <View style={[styles.badge, { backgroundColor: colors.saffron, borderColor: colors.tabBarBg }]}>
-          <Text style={[styles.badgeTxt, { color: colors.white }]}>{badgeCount > 9 ? '9+' : badgeCount}</Text>
+          <Text style={[styles.badgeTxt, { color: '#FFFFFF' }]}>{badgeCount > 9 ? '9+' : badgeCount}</Text>
         </View>
       )}
     </View>
@@ -72,20 +72,25 @@ function TabIcon({ routeName, focused, badgeCount, colors }) {
 function MainTabs() {
   const { itemCount } = useCart();
   const { unreadCount } = useNotifications();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
 
   const screenOpts = {
     tabBarStyle: {
-      backgroundColor: colors.tabBarBg,
-      borderTopColor: colors.tabBarBorder,
-      height: 64, paddingBottom: 8, paddingTop: 4,
+      backgroundColor: isDark ? 'rgba(15, 14, 18, 0.94)' : 'rgba(255, 255, 255, 0.94)',
+      borderTopColor: colors.glass?.border || (isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)'),
+      borderTopWidth: 1,
+      height: 64,
+      paddingBottom: 8,
+      paddingTop: 6,
+      elevation: 8,
     },
-    tabBarActiveTintColor:   colors.saffronLight,
+    tabBarActiveTintColor:   colors.saffron,
     tabBarInactiveTintColor: colors.tabInactive,
     tabBarLabelStyle:        { ...FONTS.semibold, fontSize: 11 },
-    headerStyle:             { backgroundColor: colors.brown },
+    headerStyle:             { backgroundColor: isDark ? '#121113' : colors.brown },
     headerTitleStyle:        { color: colors.white, ...FONTS.bold, fontSize: 18 },
     headerTintColor:         colors.white,
+    headerShadowVisible:     false,
   };
 
   return (
@@ -120,6 +125,7 @@ function MainTabs() {
       />
       <Tab.Screen name="Profile" component={ProfileScreen}
         options={{
+          title: 'Account',
           headerShown: false,
           tabBarIcon: ({ focused }) => <TabIcon routeName="Profile" focused={focused} badgeCount={unreadCount} colors={colors} />,
           tabBarLabel: 'Profile',
@@ -139,12 +145,13 @@ function AuthStack() {
 }
 
 function AppStack() {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
 
   const commonHeader = {
-    headerStyle:      { backgroundColor: colors.brown },
-    headerTitleStyle: { color: colors.white, ...FONTS.bold },
-    headerTintColor:  colors.white,
+    headerStyle:          { backgroundColor: isDark ? '#121113' : colors.brown },
+    headerTitleStyle:     { color: colors.white, ...FONTS.bold },
+    headerTintColor:      colors.white,
+    headerShadowVisible:  false,
   };
 
   return (
@@ -184,8 +191,8 @@ function RootNavigator() {
 
   if (loading) {
     return (
-      <View style={[styles.splash, { backgroundColor: colors.brown }]}>
-        <StatusBar barStyle={colors.statusBarStyle} backgroundColor={colors.brown} />
+      <View style={[styles.splash, { backgroundColor: isDark ? '#09090B' : colors.brown }]}>
+        <StatusBar barStyle={colors.statusBarStyle} backgroundColor="transparent" translucent />
         <Ionicons name="flame" size={56} color={colors.saffron} />
         <Text style={[styles.splashTitle, { color: colors.white }]}>Navedyam</Text>
         <Text style={[styles.splashSub, { color: colors.turmeric }]}>CLOUD KITCHEN  ·  BHIWANI</Text>
@@ -194,22 +201,21 @@ function RootNavigator() {
     );
   }
 
-  // Create navigation theme based on current mode
   const navTheme = {
     ...(isDark ? DarkTheme : DefaultTheme),
     colors: {
       ...(isDark ? DarkTheme.colors : DefaultTheme.colors),
       primary: colors.saffron,
       background: colors.cream,
-      card: colors.brown,
+      card: isDark ? '#121113' : colors.brown,
       text: colors.text,
-      border: colors.border,
+      border: colors.glass?.border || colors.border,
     },
   };
 
   return (
     <>
-      <StatusBar barStyle={colors.statusBarStyle} backgroundColor={colors.brown} />
+      <StatusBar barStyle={colors.statusBarStyle} backgroundColor="transparent" translucent />
       <NavigationContainer ref={navigationRef} theme={navTheme}>
         {user ? <AppStack /> : <AuthStack />}
       </NavigationContainer>
@@ -238,7 +244,8 @@ export default function App() {
 const styles = StyleSheet.create({
   splash: {
     flex: 1,
-    alignItems: 'center', justifyContent: 'center',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   splashTitle: { fontSize: 36, ...FONTS.heavy, letterSpacing: 1, marginTop: 16 },
   splashSub:   { fontSize: 11, letterSpacing: 3, textTransform: 'uppercase', marginTop: 4 },

@@ -8,15 +8,24 @@ import { useTheme } from '../context/ThemeContext';
 import { FONTS, RADIUS, SHADOW } from '../theme';
 import HeartButton from './HeartButton';
 import StarRating from './StarRating';
+import GlassCard from './GlassCard';
 import { useCart } from '../context/CartContext';
 import api from '../api/client';
 
-// Local VegBadge to avoid circular dependency with ./index
 function VegBadge({ isVeg }) {
   const { colors } = useTheme();
   const color = isVeg ? colors.green : colors.error;
   return (
-    <View style={{ width: 18, height: 18, borderWidth: 2, borderRadius: 3, borderColor: color, alignItems: 'center', justifyContent: 'center' }}>
+    <View style={{
+      width: 18,
+      height: 18,
+      borderWidth: 1.5,
+      borderRadius: 4,
+      borderColor: color,
+      backgroundColor: 'rgba(0,0,0,0.5)',
+      alignItems: 'center',
+      justifyContent: 'center',
+    }}>
       <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: color }} />
     </View>
   );
@@ -58,7 +67,7 @@ export default function ItemDetailModal({ visible, onClose, item, navigation }) 
     try {
       const data = await api.getItemReviews(itemId, 1);
       setReviews(data.reviews?.slice(0, 8) || []);
-    } catch (err) {}
+    } catch (_) {}
     setLoadingReviews(false);
   }
 
@@ -90,120 +99,144 @@ export default function ItemDetailModal({ visible, onClose, item, navigation }) 
             { transform: [{ translateY: slideAnim }] },
           ]}
         >
-          <View style={styles.handleBar} />
+          {/* Frosted Handle */}
+          <View style={styles.handleBarWrap}>
+            <View style={styles.handleBar} />
+          </View>
 
           <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
-            <View style={[styles.header, !!item.image_url && styles.headerWithImage]}>
+            {/* Header / Media */}
+            <View style={styles.heroMedia}>
               {item.image_url ? (
-                <View style={styles.heroImageContainer}>
-                  <Image
-                    source={{ uri: item.image_url }}
-                    style={styles.heroImage}
-                    resizeMode="cover"
-                  />
-                </View>
+                <Image
+                  source={{ uri: item.image_url }}
+                  style={styles.heroImage}
+                  resizeMode="cover"
+                />
               ) : (
-                <View style={styles.emojiContainer}>
-                  <Text style={styles.emoji}>{item.emoji}</Text>
+                <View style={styles.emojiFallback}>
+                  <Text style={styles.emoji}>{item.emoji || '🍛'}</Text>
                 </View>
               )}
-              <View style={[styles.badges, !!item.image_url && styles.badgesOnImage]}>
-                <VegBadge isVeg={item.is_veg} />
-                <HeartButton itemId={itemId} size={24} />
+
+              {/* Floating Circular Glass Buttons */}
+              <TouchableOpacity
+                style={styles.closeBtn}
+                onPress={handleClose}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="close" size={20} color="#FFFFFF" />
+              </TouchableOpacity>
+
+              <View style={styles.floatingTopRight}>
+                <VegBadge isVeg={item.is_veg === true || item.is_veg === 1} />
+                <View style={styles.heartBtnWrap}>
+                  <HeartButton itemId={itemId} size={20} />
+                </View>
               </View>
             </View>
 
             <View style={styles.content}>
-              <Text style={styles.name}>{item.name}</Text>
+              <View style={styles.titleRow}>
+                <Text style={styles.name}>{item.name}</Text>
+                <Text style={styles.price}>₹{item.price}</Text>
+              </View>
 
-              {item.avg_rating > 0 && (
-                <View style={styles.ratingRow}>
-                  <View style={styles.ratingBadge}>
-                    <Ionicons name="star" size={12} color={colors.white} />
-                    <Text style={styles.ratingText}>{item.avg_rating.toFixed(1)}</Text>
+              {/* Glass Metadata Pills */}
+              <View style={styles.chipsRow}>
+                {item.avg_rating > 0 && (
+                  <View style={styles.chip}>
+                    <Ionicons name="star" size={13} color={colors.turmeric} />
+                    <Text style={styles.chipText}>{item.avg_rating.toFixed(1)}</Text>
+                    <Text style={styles.chipSubText}>({item.rating_count || 1})</Text>
                   </View>
-                  <Text style={styles.ratingCount}>
-                    {item.rating_count} rating{item.rating_count !== 1 ? 's' : ''}
-                  </Text>
-                  <View style={styles.dot} />
-                  <Text style={styles.cuisine}>{item.cuisine_type || 'North Indian'}</Text>
+                )}
+
+                <View style={styles.chip}>
+                  <Ionicons name="time-outline" size={14} color={colors.saffron} />
+                  <Text style={styles.chipText}>25-35 mins</Text>
                 </View>
-              )}
 
-              <Text style={styles.price}>₹{item.price}</Text>
+                <View style={styles.chip}>
+                  <Ionicons name="flame-outline" size={14} color={colors.error} />
+                  <Text style={styles.chipText}>{item.spice_level || 'Medium'} Spice</Text>
+                </View>
 
-              <Text style={styles.description}>
-                {item.description || 'Delicious homemade preparation with authentic Haryanvi flavors. Made fresh daily with pure ingredients.'}
-              </Text>
+                {item.cuisine_type && (
+                  <View style={styles.chip}>
+                    <Ionicons name="restaurant-outline" size={13} color={colors.green} />
+                    <Text style={styles.chipText}>{item.cuisine_type}</Text>
+                  </View>
+                )}
+              </View>
 
+              {/* Description */}
+              <View style={styles.descCard}>
+                <Text style={styles.sectionLabel}>About this Dish</Text>
+                <Text style={styles.description}>
+                  {item.description || 'Delicious homemade preparation with authentic Haryanvi flavors. Made fresh daily with pure desi ghee and hand-ground spices.'}
+                </Text>
+              </View>
+
+              {/* Tags */}
               {item.tags && item.tags.length > 0 && (
-                <View style={styles.tagsRow}>
+                <View style={styles.tagsContainer}>
                   {item.tags.map((tag, i) => (
-                    <View key={i} style={styles.tag}>
-                      <Text style={styles.tagText}>{tag}</Text>
+                    <View key={i} style={styles.tagPill}>
+                      <Text style={styles.tagText}>#{tag}</Text>
                     </View>
                   ))}
                 </View>
               )}
 
-              <View style={styles.infoRow}>
-                <View style={styles.infoItem}>
-                  <Ionicons name="time-outline" size={18} color={colors.saffron} />
-                  <Text style={styles.infoText}>20-30 min</Text>
-                </View>
-                <View style={styles.infoItem}>
-                  <Ionicons name="flame-outline" size={18} color={colors.saffron} />
-                  <Text style={styles.infoText}>
-                    {item.spice_level || 'Medium'} spice
-                  </Text>
-                </View>
-                <View style={styles.infoItem}>
-                  <Ionicons name="heart-outline" size={18} color={colors.saffron} />
-                  <Text style={styles.infoText}>Best Seller</Text>
-                </View>
-              </View>
-
+              {/* Customer Reviews */}
               {reviews.length > 0 && (
                 <View style={styles.reviewsSection}>
                   <View style={styles.reviewsHeader}>
-                    <Text style={styles.sectionTitle}>Customer Reviews</Text>
+                    <Text style={styles.sectionLabel}>Customer Reviews</Text>
+                    <Text style={styles.reviewsCount}>{reviews.length} feedback</Text>
                   </View>
+
                   {reviews.map((review, i) => (
-                    <View key={i} style={styles.reviewCard}>
+                    <GlassCard key={i} style={styles.reviewCard} padding={12} subtle>
                       <View style={styles.reviewHeader}>
                         <View style={styles.reviewerInfo}>
-                          <View style={styles.reviewerAvatar}>
-                            <Text style={styles.reviewerInitial}>
+                          <View style={styles.avatarRing}>
+                            <Text style={styles.avatarLetter}>
                               {review.user?.name?.[0] || 'U'}
                             </Text>
                           </View>
                           <Text style={styles.reviewerName}>
-                            {review.user?.name || 'User'}
+                            {review.user?.name || 'Happy Customer'}
                           </Text>
                         </View>
-                        <StarRating rating={review.rating} size={12} />
+                        <StarRating rating={review.rating} size={11} />
                       </View>
-                      <Text style={styles.reviewComment} numberOfLines={2}>
-                        {review.comment}
-                      </Text>
-                    </View>
+                      {review.comment ? (
+                        <Text style={styles.reviewComment} numberOfLines={3}>
+                          "{review.comment}"
+                        </Text>
+                      ) : null}
+                    </GlassCard>
                   ))}
                 </View>
               )}
+
               {loadingReviews && (
-                <ActivityIndicator size="small" color={colors.saffron} style={{ marginTop: 16 }} />
+                <ActivityIndicator size="small" color={colors.saffron} style={{ marginVertical: 16 }} />
               )}
             </View>
           </ScrollView>
 
+          {/* Frosted Action Footer */}
           <View style={styles.footer}>
             {qty === 0 ? (
               <TouchableOpacity
                 style={styles.addButton}
                 onPress={() => addItem({ ...item, id: itemId })}
-                activeOpacity={0.85}
+                activeOpacity={0.88}
               >
-                <Ionicons name="add-circle-outline" size={22} color={colors.white} />
+                <Ionicons name="bag-add-outline" size={20} color="#FFFFFF" />
                 <Text style={styles.addButtonText}>Add to Cart · ₹{item.price}</Text>
               </TouchableOpacity>
             ) : (
@@ -212,26 +245,30 @@ export default function ItemDetailModal({ visible, onClose, item, navigation }) 
                   <TouchableOpacity
                     style={styles.qtyBtn}
                     onPress={() => removeItem(itemId)}
+                    activeOpacity={0.7}
                   >
-                    <Ionicons name="remove" size={20} color={colors.text} />
+                    <Ionicons name="remove" size={18} color={colors.text} />
                   </TouchableOpacity>
                   <Text style={styles.qtyText}>{qty}</Text>
                   <TouchableOpacity
                     style={[styles.qtyBtn, styles.qtyBtnAdd]}
                     onPress={() => addItem({ ...item, id: itemId })}
+                    activeOpacity={0.7}
                   >
-                    <Ionicons name="add" size={20} color={colors.white} />
+                    <Ionicons name="add" size={18} color="#FFFFFF" />
                   </TouchableOpacity>
                 </View>
+
                 <TouchableOpacity
                   style={styles.viewCartBtn}
                   onPress={() => {
                     handleClose();
                     navigation?.navigate('Cart');
                   }}
+                  activeOpacity={0.88}
                 >
                   <Text style={styles.viewCartText}>View Cart · ₹{item.price * qty}</Text>
-                  <Ionicons name="arrow-forward" size={18} color={colors.white} />
+                  <Ionicons name="arrow-forward" size={17} color="#FFFFFF" />
                 </TouchableOpacity>
               </View>
             )}
@@ -249,286 +286,296 @@ const createStyles = (colors, isDark) => StyleSheet.create({
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.65)',
   },
   sheet: {
-    backgroundColor: colors.cardBg,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    maxHeight: SCREEN_HEIGHT * 0.85,
+    backgroundColor: isDark ? 'rgba(18,17,20,0.96)' : 'rgba(255,255,255,0.97)',
+    borderTopLeftRadius: RADIUS.xxl,
+    borderTopRightRadius: RADIUS.xxl,
+    borderWidth: 1,
+    borderColor: colors.glass?.border || (isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.06)'),
+    borderTopColor: colors.glass?.highlight || (isDark ? 'rgba(255,255,255,0.3)' : '#FFFFFF'),
+    maxHeight: SCREEN_HEIGHT * 0.88,
     ...SHADOW.large,
   },
-  handleBar: {
-    width: 40,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: colors.border,
-    alignSelf: 'center',
-    marginTop: 12,
-    marginBottom: 8,
-  },
-  header: {
+  handleBarWrap: {
     alignItems: 'center',
-    paddingTop: 16,
-    paddingBottom: 8,
-    backgroundColor: colors.creamDark,
+    paddingVertical: 10,
   },
-  headerWithImage: {
-    paddingTop: 0,
-    paddingBottom: 0,
-    position: 'relative',
+  handleBar: {
+    width: 44,
+    height: 4.5,
+    borderRadius: 3,
+    backgroundColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.15)',
   },
-  heroImageContainer: {
+  heroMedia: {
     width: '100%',
     height: 220,
-    backgroundColor: colors.creamDark,
+    backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : '#F1F5F9',
+    position: 'relative',
     overflow: 'hidden',
   },
   heroImage: {
     width: '100%',
     height: '100%',
   },
-  emojiContainer: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: isDark ? colors.cardBg : colors.white,
+  emojiFallback: {
+    width: '100%',
+    height: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-    ...SHADOW.medium,
   },
   emoji: {
     fontSize: 64,
   },
-  badges: {
+  closeBtn: {
+    position: 'absolute',
+    top: 12,
+    left: 14,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  floatingTopRight: {
+    position: 'absolute',
+    top: 12,
+    right: 14,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    position: 'absolute',
-    top: 16,
-    right: 16,
+    gap: 8,
+  },
+  heartBtnWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   content: {
     padding: 20,
+    paddingTop: 16,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: 12,
+    marginBottom: 12,
   },
   name: {
+    flex: 1,
+    fontSize: 21,
     ...FONTS.heavy,
-    fontSize: 24,
     color: colors.text,
-    marginBottom: 8,
-  },
-  ratingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  ratingBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: colors.green,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: RADIUS.sm,
-  },
-  ratingText: {
-    ...FONTS.bold,
-    fontSize: 12,
-    color: colors.white,
-  },
-  ratingCount: {
-    ...FONTS.medium,
-    fontSize: 13,
-    color: colors.textMuted,
-    marginLeft: 8,
-  },
-  dot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: colors.border,
-    marginHorizontal: 8,
-  },
-  cuisine: {
-    ...FONTS.medium,
-    fontSize: 13,
-    color: colors.textMuted,
+    letterSpacing: -0.3,
   },
   price: {
+    fontSize: 22,
     ...FONTS.heavy,
-    fontSize: 28,
-    color: colors.saffronDeep,
-    marginBottom: 12,
+    color: colors.saffron,
+    letterSpacing: -0.4,
   },
-  description: {
-    ...FONTS.regular,
-    fontSize: 14,
-    color: colors.textMuted,
-    lineHeight: 22,
-    marginBottom: 16,
-  },
-  tagsRow: {
+  chipsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
     marginBottom: 16,
   },
-  tag: {
-    backgroundColor: colors.creamDark,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 5.5,
     borderRadius: RADIUS.full,
+    backgroundColor: colors.glass?.pill || (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'),
+    borderWidth: 1,
+    borderColor: colors.glass?.pillBorder || 'rgba(255,255,255,0.1)',
+    gap: 5,
+  },
+  chipText: {
+    fontSize: 12,
+    ...FONTS.semibold,
+    color: colors.text,
+  },
+  chipSubText: {
+    fontSize: 11,
+    color: colors.textMuted,
+  },
+  descCard: {
+    paddingVertical: 12,
+    borderTopWidth: 1,
+    borderTopColor: colors.glass?.borderSubtle || (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'),
+    marginBottom: 12,
+  },
+  sectionLabel: {
+    fontSize: 15,
+    ...FONTS.bold,
+    color: colors.text,
+    marginBottom: 6,
+    letterSpacing: -0.2,
+  },
+  description: {
+    fontSize: 13.5,
+    color: colors.textMuted,
+    lineHeight: 20,
+  },
+  tagsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 16,
+  },
+  tagPill: {
+    backgroundColor: isDark ? 'rgba(245,158,11,0.12)' : 'rgba(22,163,74,0.1)',
+    borderRadius: RADIUS.full,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderWidth: 1,
+    borderColor: isDark ? 'rgba(245,158,11,0.25)' : 'rgba(22,163,74,0.2)',
   },
   tagText: {
-    ...FONTS.medium,
-    fontSize: 12,
-    color: colors.text,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    backgroundColor: colors.creamDark,
-    borderRadius: RADIUS.lg,
-    borderWidth: 1,
-    borderColor: colors.borderLight,
-    padding: 16,
-    marginBottom: 20,
-  },
-  infoItem: {
-    alignItems: 'center',
-    gap: 6,
-  },
-  infoText: {
-    ...FONTS.medium,
-    fontSize: 12,
-    color: colors.text,
+    fontSize: 11.5,
+    ...FONTS.semibold,
+    color: colors.saffron,
   },
   reviewsSection: {
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
+    marginTop: 8,
     paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: colors.glass?.borderSubtle || (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'),
   },
   reviewsHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 10,
   },
-  sectionTitle: {
-    ...FONTS.bold,
-    fontSize: 16,
-    color: colors.text,
+  reviewsCount: {
+    fontSize: 12,
+    ...FONTS.medium,
+    color: colors.textMuted,
   },
   reviewCard: {
-    backgroundColor: colors.creamDark,
     borderRadius: RADIUS.md,
-    borderWidth: 1,
-    borderColor: colors.borderLight,
-    padding: 12,
     marginBottom: 10,
   },
   reviewHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 4,
   },
   reviewerInfo: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
-  reviewerAvatar: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: colors.saffron,
+  avatarRing: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: isDark ? 'rgba(245,158,11,0.2)' : 'rgba(22,163,74,0.15)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  reviewerInitial: {
+  avatarLetter: {
+    fontSize: 11,
     ...FONTS.bold,
-    fontSize: 12,
-    color: colors.white,
+    color: colors.saffron,
   },
   reviewerName: {
-    ...FONTS.medium,
-    fontSize: 13,
+    fontSize: 12.5,
+    ...FONTS.semibold,
     color: colors.text,
   },
   reviewComment: {
-    ...FONTS.regular,
-    fontSize: 13,
+    fontSize: 12,
     color: colors.textMuted,
-    lineHeight: 18,
+    lineHeight: 17,
+    marginTop: 2,
+    fontStyle: 'italic',
   },
   footer: {
     padding: 16,
-    paddingBottom: 32,
+    paddingBottom: 24,
+    backgroundColor: isDark ? 'rgba(18,17,20,0.95)' : 'rgba(255,255,255,0.95)',
     borderTopWidth: 1,
-    borderTopColor: colors.border,
-    backgroundColor: colors.cardBg,
+    borderTopColor: colors.glass?.border || (isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.06)'),
   },
   addButton: {
+    backgroundColor: colors.saffron,
+    borderRadius: RADIUS.lg,
+    paddingVertical: 14,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    backgroundColor: colors.saffron,
-    borderRadius: RADIUS.lg,
-    paddingVertical: 16,
-    ...SHADOW.medium,
+    gap: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.25)',
+    ...SHADOW.glassGlow,
   },
   addButtonText: {
+    color: '#FFFFFF',
+    fontSize: 15.5,
     ...FONTS.bold,
-    fontSize: 16,
-    color: colors.white,
   },
   qtyFooter: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
+    gap: 12,
   },
   qtyControls: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.creamDark,
+    backgroundColor: colors.glass?.card || (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)'),
     borderRadius: RADIUS.lg,
+    padding: 4,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.glass?.border || 'rgba(255,255,255,0.14)',
   },
   qtyBtn: {
-    width: 44,
-    height: 44,
+    width: 36,
+    height: 36,
+    borderRadius: RADIUS.md,
+    backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
   },
   qtyBtnAdd: {
     backgroundColor: colors.saffron,
-    borderTopRightRadius: RADIUS.lg - 2,
-    borderBottomRightRadius: RADIUS.lg - 2,
   },
   qtyText: {
+    fontSize: 16,
     ...FONTS.bold,
-    fontSize: 18,
     color: colors.text,
-    minWidth: 36,
+    minWidth: 32,
     textAlign: 'center',
   },
   viewCartBtn: {
     flex: 1,
+    backgroundColor: colors.saffron,
+    borderRadius: RADIUS.lg,
+    paddingVertical: 13,
+    paddingHorizontal: 16,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: colors.saffron,
-    borderRadius: RADIUS.lg,
-    paddingVertical: 14,
-    ...SHADOW.medium,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.25)',
+    ...SHADOW.glassGlow,
   },
   viewCartText: {
+    color: '#FFFFFF',
+    fontSize: 14.5,
     ...FONTS.bold,
-    fontSize: 15,
-    color: colors.white,
   },
 });

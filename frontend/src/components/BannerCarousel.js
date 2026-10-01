@@ -153,6 +153,9 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.xl,
     overflow: 'hidden',
     marginRight: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+    borderTopColor: 'rgba(255,255,255,0.4)',
     ...SHADOW.medium,
   },
   bannerContent: {
