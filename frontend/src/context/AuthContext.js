@@ -1,12 +1,45 @@
 // src/context/AuthContext.js
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import * as Notifications from 'expo-notifications';
 import api from '../api/client';
 
 const AuthContext = createContext(null);
 
+async function setStoredToken(token) {
+  try {
+    if (Platform.OS === 'web' && typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.setItem('navedyam_token', token);
+    } else {
+      await SecureStore.setItemAsync('navedyam_token', token);
+    }
+  } catch (_) {}
+}
+
+async function getStoredToken() {
+  try {
+    if (Platform.OS === 'web' && typeof window !== 'undefined' && window.localStorage) {
+      return window.localStorage.getItem('navedyam_token');
+    }
+    return await SecureStore.getItemAsync('navedyam_token');
+  } catch (_) {
+    return null;
+  }
+}
+
+async function removeStoredToken() {
+  try {
+    if (Platform.OS === 'web' && typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.removeItem('navedyam_token');
+    } else {
+      await SecureStore.deleteItemAsync('navedyam_token');
+    }
+  } catch (_) {}
+}
+
 async function registerPushToken() {
+  if (Platform.OS === 'web') return;
   try {
     const { status } = await Notifications.requestPermissionsAsync();
     if (status !== 'granted') return;
@@ -21,26 +54,35 @@ export function AuthProvider({ children }) {
   const [user,    setUser]    = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // On app launch — restore session
+  // On app launch — restore session safely
   useEffect(() => {
+    let active = true;
     (async () => {
       try {
-        const token = await SecureStore.getItemAsync('navedyam_token');
+        const token = await getStoredToken();
         if (token) {
           const data = await api.getMe();
-          setUser(data.user);
+          if (active && data?.user) {
+            setUser(data.user);
+          }
         }
       } catch (_) {
-        await SecureStore.deleteItemAsync('navedyam_token');
+        await removeStoredToken();
       } finally {
-        setLoading(false);
+        if (active) {
+          setLoading(false);
+        }
       }
     })();
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   async function login(phone, password) {
     const data = await api.login({ phone, password });
-    await SecureStore.setItemAsync('navedyam_token', data.token);
+    await setStoredToken(data.token);
     setUser(data.user);
     registerPushToken();
     return data;
@@ -48,14 +90,14 @@ export function AuthProvider({ children }) {
 
   async function register(name, phone, password, address) {
     const data = await api.register({ name, phone, password, address });
-    await SecureStore.setItemAsync('navedyam_token', data.token);
+    await setStoredToken(data.token);
     setUser(data.user);
     registerPushToken();
     return data;
   }
 
   async function logout() {
-    await SecureStore.deleteItemAsync('navedyam_token');
+    await removeStoredToken();
     setUser(null);
   }
 

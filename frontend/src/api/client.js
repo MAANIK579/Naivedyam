@@ -1,8 +1,13 @@
 // src/api/client.js — Full API client for Navedyam
 import * as SecureStore from 'expo-secure-store';
 import Constants from 'expo-constants';
+import { Platform } from 'react-native';
 
 function inferDevApiBaseUrl() {
+  if (Platform.OS === 'web') {
+    return 'http://localhost:4000/api';
+  }
+
   const hostUri =
     Constants.expoConfig?.hostUri ||
     Constants.manifest2?.extra?.expoClient?.hostUri ||
@@ -18,12 +23,19 @@ function inferDevApiBaseUrl() {
 export const BASE_URL =
   process.env.EXPO_PUBLIC_API_URL ||
   inferDevApiBaseUrl() ||
-  'http://10.52.5.10:4000/api';
+  (Platform.OS === 'web' ? 'http://localhost:4000/api' : 'http://192.168.1.56:4000/api');
 
 export const SOCKET_URL = BASE_URL.replace('/api', '');
 
 async function getToken() {
-  return await SecureStore.getItemAsync('navedyam_token');
+  try {
+    if (Platform.OS === 'web' && typeof window !== 'undefined' && window.localStorage) {
+      return window.localStorage.getItem('navedyam_token');
+    }
+    return await SecureStore.getItemAsync('navedyam_token');
+  } catch (_) {
+    return null;
+  }
 }
 
 async function request(path, options = {}) {
@@ -31,16 +43,23 @@ async function request(path, options = {}) {
   const headers = { 'Content-Type': 'application/json' };
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 6000); // 6s network timeout
+
   let res;
   try {
     res = await fetch(`${BASE_URL}${path}`, {
       ...options,
+      signal: controller.signal,
       headers: { ...headers, ...(options.headers || {}) },
     });
   } catch (_) {
+    clearTimeout(timeoutId);
     throw new Error(
-      `Cannot reach server at ${BASE_URL}. Start backend and ensure phone can access your PC's IP.`
+      `Cannot reach server at ${BASE_URL}. Start backend and ensure server is running.`
     );
+  } finally {
+    clearTimeout(timeoutId);
   }
 
   const data = await res.json();
