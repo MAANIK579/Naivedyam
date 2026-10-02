@@ -1,8 +1,9 @@
-// src/components/ActiveOrderTracker.js — Dynamic Unified Bottom Bar (Live Order Tracking + Floating Cart) & Pop-up Modal
+// src/components/ActiveOrderTracker.js — Unified Floating Bottom Bar (Sliding Live Order Tracking & Cart) & Pop-up Modal
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, Modal,
   ScrollView, ActivityIndicator, Alert, Linking, Animated, Easing,
+  Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { api } from '../api/client';
@@ -11,6 +12,9 @@ import { useCart } from '../context/CartContext';
 import { useTheme } from '../context/ThemeContext';
 import { useSocket } from '../context/SocketContext';
 import { FONTS, RADIUS, SHADOW } from '../theme';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const CARD_WIDTH = SCREEN_WIDTH - 28; // 14px padding on each side
 
 const LIVE_STATUSES = ['placed', 'confirmed', 'preparing', 'out_for_delivery'];
 
@@ -78,6 +82,9 @@ export default function ActiveOrderTracker({ forceOpen = false, onTrackerDismiss
   const [cancelling, setCancelling] = useState(false);
   const [fullTracking, setFullTracking] = useState(null);
   const [now, setNow] = useState(Date.now());
+  const [activeSlide, setActiveSlide] = useState(0); // 0 = Tracking, 1 = Cart
+
+  const sliderScrollRef = useRef(null);
 
   // Dynamic live countdown tick every 30s
   useEffect(() => {
@@ -135,7 +142,7 @@ export default function ActiveOrderTracker({ forceOpen = false, onTrackerDismiss
           const trackData = await api.trackOrder(primary.display_id || primary._id);
           setFullTracking(trackData);
         } catch (_) {
-          // Fallback to primary order
+          // Fallback
         }
       } else {
         setActiveOrder(null);
@@ -201,8 +208,25 @@ export default function ActiveOrderTracker({ forceOpen = false, onTrackerDismiss
     };
   }, [socket, activeOrder?._id, activeOrder?.display_id, refreshActiveOrder]);
 
+  // Auto-scroll to newly added cart if user was on tracking
+  const prevItemCount = useRef(itemCount);
+  useEffect(() => {
+    if (prevItemCount.current === 0 && itemCount > 0 && activeOrder) {
+      // User just added an item while having an active order: switch to cart slide with a gentle delay
+      setTimeout(() => {
+        sliderScrollRef.current?.scrollTo({ x: CARD_WIDTH, animated: true });
+        setActiveSlide(1);
+      }, 300);
+    }
+    prevItemCount.current = itemCount;
+  }, [itemCount, activeOrder]);
+
   // If nothing to display at all, return null
-  if (!activeOrder && itemCount === 0 && !modalVisible) {
+  const hasActiveOrder = !!activeOrder;
+  const hasCartItems = itemCount > 0;
+  const hasBoth = hasActiveOrder && hasCartItems;
+
+  if (!hasActiveOrder && !hasCartItems && !modalVisible) {
     return null;
   }
 
@@ -268,80 +292,192 @@ export default function ActiveOrderTracker({ forceOpen = false, onTrackerDismiss
     );
   }
 
+  function handleSlideToggle(targetIndex) {
+    sliderScrollRef.current?.scrollTo({ x: targetIndex * CARD_WIDTH, animated: true });
+    setActiveSlide(targetIndex);
+  }
+
   const styles = createStyles(colors, isDark);
 
   return (
     <>
-      {/* ── Dynamic Floating Bottom Bar (Cart & Live Tracking) ──────── */}
+      {/* ── Single Unified Floating Bottom Card (Sliding between Tracking & Cart) ── */}
       <View style={styles.floatingContainer} pointerEvents="box-none">
-        {/* Active Order Tracking Capsule */}
-        {activeOrder && (
-          <TouchableOpacity
-            style={[
-              styles.capsuleContainer,
-              itemCount > 0 && styles.capsuleStacked,
-            ]}
-            onPress={() => setModalVisible(true)}
-            activeOpacity={0.92}
-          >
-            <View style={styles.capsuleLeft}>
-              <View style={styles.capsuleIconWrap}>
-                <Ionicons name={cfg.icon} size={18} color={colors.saffron} />
-                <Animated.View style={[styles.pulseDot, { opacity: pulseAnim }]} />
-              </View>
+        <View style={styles.unifiedCard}>
+          {hasBoth ? (
+            // Both exist: Single card with horizontal swipeable slider
+            <>
+              <ScrollView
+                ref={sliderScrollRef}
+                horizontal
+                pagingEnabled
+                showsHorizontalScrollIndicator={false}
+                scrollEventThrottle={16}
+                onMomentumScrollEnd={(e) => {
+                  const x = e.nativeEvent.contentOffset.x;
+                  const idx = Math.round(x / CARD_WIDTH);
+                  setActiveSlide(idx);
+                }}
+                style={styles.sliderScrollView}
+              >
+                {/* Slide 0: Live Order Tracking */}
+                <TouchableOpacity
+                  style={styles.slideItem}
+                  onPress={() => setModalVisible(true)}
+                  activeOpacity={0.92}
+                >
+                  <View style={styles.slideLeft}>
+                    <View style={styles.iconWrapLive}>
+                      <Ionicons name={cfg.icon} size={18} color="#FFFFFF" />
+                      <Animated.View style={[styles.pulseDot, { opacity: pulseAnim }]} />
+                    </View>
+                    <View style={styles.slideTexts}>
+                      <View style={styles.titleRow}>
+                        <Text style={styles.slideTitleLive}>{etaText}</Text>
+                        {clockTime ? <Text style={styles.clockSubText}>· {clockTime}</Text> : null}
+                      </View>
+                      <Text style={styles.slideDesc} numberOfLines={1}>
+                        #{activeOrder.display_id || 'NVD'} · {cfg.sub}
+                      </Text>
+                    </View>
+                  </View>
 
-              <View style={styles.capsuleTexts}>
-                <View style={styles.capsuleTitleRow}>
-                  <Text style={styles.capsuleEtaText}>{etaText}</Text>
-                  {clockTime ? <Text style={styles.capsuleClockText}>· {clockTime}</Text> : null}
-                </View>
-                <Text style={styles.capsuleSubText} numberOfLines={1}>
-                  #{activeOrder.display_id || 'NVD'} · {cfg.sub}
-                </Text>
-              </View>
-            </View>
+                  <View style={styles.slideRight}>
+                    <View style={styles.trackPillBtn}>
+                      <Text style={styles.trackPillText}>Track</Text>
+                      <Ionicons name="chevron-up" size={13} color="#FFFFFF" />
+                    </View>
+                  </View>
+                </TouchableOpacity>
 
-            <View style={styles.capsuleRight}>
-              <View style={styles.trackActionBtn}>
-                <Text style={styles.trackActionText}>Track</Text>
-                <Ionicons name="chevron-up" size={13} color="#FFFFFF" />
-              </View>
-            </View>
-          </TouchableOpacity>
-        )}
+                {/* Slide 1: Cart Summary */}
+                <TouchableOpacity
+                  style={styles.slideItem}
+                  onPress={() => navigation?.navigate?.('Cart')}
+                  activeOpacity={0.92}
+                >
+                  <View style={styles.slideLeft}>
+                    <View style={styles.iconWrapCart}>
+                      <Ionicons name="cart" size={17} color="#FFFFFF" />
+                      <View style={styles.cartCountBadge}>
+                        <Text style={styles.cartCountBadgeText}>{itemCount}</Text>
+                      </View>
+                    </View>
+                    <View style={styles.slideTexts}>
+                      <View style={styles.titleRow}>
+                        <Text style={styles.slideTitleCart}>
+                          {itemCount} ITEM{itemCount > 1 ? 'S' : ''} · ₹{itemTotal}
+                        </Text>
+                      </View>
+                      <Text style={styles.slideDesc} numberOfLines={1}>
+                        {itemsPreview || 'Dishes added to cart'}
+                      </Text>
+                    </View>
+                  </View>
 
-        {/* Dynamic Floating Cart Bar */}
-        {itemCount > 0 && (
-          <TouchableOpacity
-            style={styles.cartBarContainer}
-            onPress={() => navigation?.navigate?.('Cart')}
-            activeOpacity={0.92}
-          >
-            <View style={styles.cartLeft}>
-              <View style={styles.cartBadge}>
-                <Ionicons name="cart" size={14} color="#FFFFFF" style={{ marginRight: 3 }} />
-                <Text style={styles.cartBadgeText}>{itemCount}</Text>
-              </View>
-              <View style={styles.cartTexts}>
-                <View style={styles.cartPriceRow}>
-                  <Text style={styles.cartItemCountText}>
-                    {itemCount} ITEM{itemCount > 1 ? 'S' : ''}
+                  <View style={styles.slideRight}>
+                    <View style={styles.cartPillBtn}>
+                      <Text style={styles.cartPillText}>View Cart</Text>
+                      <Ionicons name="arrow-forward" size={14} color="#FFFFFF" />
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              </ScrollView>
+
+              {/* Bottom Pagination Bar / Dots */}
+              <View style={styles.paginationBar}>
+                <TouchableOpacity
+                  onPress={() => handleSlideToggle(activeSlide === 0 ? 1 : 0)}
+                  activeOpacity={0.7}
+                  style={styles.paginationHintRow}
+                >
+                  <Text style={styles.paginationHintText}>
+                    {activeSlide === 0 ? 'SWIPE OR TAP FOR CART' : 'SWIPE OR TAP TO TRACK'}
                   </Text>
-                  <Text style={styles.cartDotText}>·</Text>
-                  <Text style={styles.cartPriceText}>₹{itemTotal}</Text>
-                </View>
-                <Text style={styles.cartPreviewText} numberOfLines={1}>
-                  {itemsPreview || 'Dishes added to cart'}
-                </Text>
-              </View>
-            </View>
+                  <Ionicons
+                    name={activeSlide === 0 ? 'arrow-forward' : 'arrow-back'}
+                    size={11}
+                    color="rgba(255, 255, 255, 0.65)"
+                  />
+                </TouchableOpacity>
 
-            <View style={styles.cartRight}>
-              <Text style={styles.viewCartActionText}>VIEW CART</Text>
-              <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
-            </View>
-          </TouchableOpacity>
-        )}
+                <View style={styles.dotsRow}>
+                  <TouchableOpacity
+                    onPress={() => handleSlideToggle(0)}
+                    style={[styles.dot, activeSlide === 0 ? styles.dotActive : styles.dotInactive]}
+                  />
+                  <TouchableOpacity
+                    onPress={() => handleSlideToggle(1)}
+                    style={[styles.dot, activeSlide === 1 ? styles.dotActive : styles.dotInactive]}
+                  />
+                </View>
+              </View>
+            </>
+          ) : hasActiveOrder ? (
+            // Only Active Order exists: Clean, sleek single tracking row
+            <TouchableOpacity
+              style={styles.slideItemStandalone}
+              onPress={() => setModalVisible(true)}
+              activeOpacity={0.92}
+            >
+              <View style={styles.slideLeft}>
+                <View style={styles.iconWrapLive}>
+                  <Ionicons name={cfg.icon} size={18} color="#FFFFFF" />
+                  <Animated.View style={[styles.pulseDot, { opacity: pulseAnim }]} />
+                </View>
+                <View style={styles.slideTexts}>
+                  <View style={styles.titleRow}>
+                    <Text style={styles.slideTitleLive}>{etaText}</Text>
+                    {clockTime ? <Text style={styles.clockSubText}>· {clockTime}</Text> : null}
+                  </View>
+                  <Text style={styles.slideDesc} numberOfLines={1}>
+                    #{activeOrder.display_id || 'NVD'} · {cfg.sub}
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.slideRight}>
+                <View style={styles.trackPillBtn}>
+                  <Text style={styles.trackPillText}>Track</Text>
+                  <Ionicons name="chevron-up" size={13} color="#FFFFFF" />
+                </View>
+              </View>
+            </TouchableOpacity>
+          ) : (
+            // Only Cart exists: Clean, sleek single cart row
+            <TouchableOpacity
+              style={styles.slideItemStandalone}
+              onPress={() => navigation?.navigate?.('Cart')}
+              activeOpacity={0.92}
+            >
+              <View style={styles.slideLeft}>
+                <View style={styles.iconWrapCart}>
+                  <Ionicons name="cart" size={17} color="#FFFFFF" />
+                  <View style={styles.cartCountBadge}>
+                    <Text style={styles.cartCountBadgeText}>{itemCount}</Text>
+                  </View>
+                </View>
+                <View style={styles.slideTexts}>
+                  <View style={styles.titleRow}>
+                    <Text style={styles.slideTitleCart}>
+                      {itemCount} ITEM{itemCount > 1 ? 'S' : ''} · ₹{itemTotal}
+                    </Text>
+                  </View>
+                  <Text style={styles.slideDesc} numberOfLines={1}>
+                    {itemsPreview || 'Dishes added to cart'}
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.slideRight}>
+                <View style={styles.cartPillBtn}>
+                  <Text style={styles.cartPillText}>View Cart</Text>
+                  <Ionicons name="arrow-forward" size={14} color="#FFFFFF" />
+                </View>
+              </View>
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       {/* ── Live Tracking Pop-Up Sheet / Modal ────────────────── */}
@@ -562,128 +698,78 @@ const createStyles = (colors, isDark) => StyleSheet.create({
   // ── Unified Floating Container ────────────────────────────
   floatingContainer: {
     position: 'absolute',
-    bottom: 74, // Cleanly above the 62px bottom tab bar
+    bottom: 68, // Precision docked 6px above the 62px bottom tab bar
     left: 14,
     right: 14,
-    gap: 8,
     zIndex: 999,
-    elevation: 10,
+    elevation: 12,
   },
 
-  // ── Floating Cart Bar ─────────────────────────────────────
-  cartBarContainer: {
-    backgroundColor: colors.saffron,
-    borderRadius: RADIUS.lg,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+  // ── Single Sleek Luxury Floating Card ─────────────────────
+  unifiedCard: {
+    backgroundColor: '#18181B', // Premium obsidian dark background for maximum contrast over food cards
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    overflow: 'hidden',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.32,
+    shadowRadius: 14,
+    elevation: 12,
+  },
+
+  sliderScrollView: {
+    width: CARD_WIDTH,
+  },
+
+  slideItem: {
+    width: CARD_WIDTH,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    ...SHADOW.large,
-    elevation: 8,
-  },
-  cartLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-    marginRight: 10,
-  },
-  cartBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.22)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: RADIUS.full,
-    marginRight: 10,
-  },
-  cartBadgeText: {
-    color: '#FFFFFF',
-    fontSize: 12.5,
-    ...FONTS.heavy,
-  },
-  cartTexts: {
-    flex: 1,
-  },
-  cartPriceRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-  },
-  cartItemCountText: {
-    color: '#FFFFFF',
-    fontSize: 11,
-    ...FONTS.bold,
-    letterSpacing: 0.4,
-    opacity: 0.95,
-  },
-  cartDotText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    opacity: 0.7,
-  },
-  cartPriceText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    ...FONTS.heavy,
-  },
-  cartPreviewText: {
-    color: '#FFFFFF',
-    fontSize: 11,
-    opacity: 0.85,
-    marginTop: 1,
-  },
-  cartRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.22)',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: RADIUS.md,
-    gap: 6,
-  },
-  viewCartActionText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    ...FONTS.heavy,
-    letterSpacing: 0.5,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
   },
 
-  // ── Floating Tracking Capsule ─────────────────────────────
-  capsuleContainer: {
-    backgroundColor: isDark ? '#1C1917' : '#FFFFFF',
-    borderRadius: RADIUS.xl,
+  slideItemStandalone: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingVertical: 11,
-    paddingHorizontal: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderWidth: 1.5,
-    borderColor: colors.saffron,
-    ...SHADOW.large,
-    elevation: 8,
+    paddingHorizontal: 14,
   },
-  capsuleStacked: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    backgroundColor: isDark ? '#261F1D' : '#FFF7ED',
-  },
-  capsuleLeft: {
+
+  slideLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
     marginRight: 10,
   },
-  capsuleIconWrap: {
+
+  iconWrapLive: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: colors.saffronPale,
+    backgroundColor: 'rgba(234, 88, 12, 0.25)', // Saffron glow
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
     marginRight: 10,
   },
+
+  iconWrapCart: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255, 255, 255, 0.14)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+    marginRight: 10,
+  },
+
   pulseDot: {
     position: 'absolute',
     top: 1,
@@ -691,10 +777,11 @@ const createStyles = (colors, isDark) => StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#16A34A',
+    backgroundColor: '#22C55E', // Vivid emerald green
     borderWidth: 1.5,
-    borderColor: '#FFFFFF',
+    borderColor: '#18181B',
   },
+
   pulseDotSmall: {
     width: 6,
     height: 6,
@@ -702,46 +789,143 @@ const createStyles = (colors, isDark) => StyleSheet.create({
     backgroundColor: '#16A34A',
     marginRight: 4,
   },
-  capsuleTexts: {
+
+  cartCountBadge: {
+    position: 'absolute',
+    top: -2,
+    right: -3,
+    backgroundColor: colors.saffron,
+    borderRadius: 8,
+    minWidth: 16,
+    height: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 3,
+    borderWidth: 1.5,
+    borderColor: '#18181B',
+  },
+
+  cartCountBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 9.5,
+    ...FONTS.heavy,
+  },
+
+  slideTexts: {
     flex: 1,
   },
-  capsuleTitleRow: {
+
+  titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  capsuleEtaText: {
+
+  slideTitleLive: {
     fontSize: 13.5,
     ...FONTS.heavy,
-    color: colors.saffron,
+    color: '#FB923C', // Warm luminous saffron
   },
-  capsuleClockText: {
+
+  slideTitleCart: {
+    fontSize: 13.5,
+    ...FONTS.heavy,
+    color: '#FFFFFF',
+  },
+
+  clockSubText: {
     fontSize: 11.5,
     ...FONTS.medium,
-    color: colors.textMuted,
+    color: 'rgba(255, 255, 255, 0.6)',
     marginLeft: 4,
   },
-  capsuleSubText: {
+
+  slideDesc: {
     fontSize: 11,
-    color: colors.textMuted,
+    color: 'rgba(255, 255, 255, 0.72)',
     marginTop: 1,
   },
-  capsuleRight: {
+
+  slideRight: {
     alignItems: 'center',
     justifyContent: 'center',
   },
-  trackActionBtn: {
+
+  trackPillBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.saffron,
-    paddingHorizontal: 11,
-    paddingVertical: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
     borderRadius: RADIUS.full,
     gap: 3,
   },
-  trackActionText: {
+
+  trackPillText: {
     color: '#FFFFFF',
-    fontSize: 11.5,
+    fontSize: 12,
     ...FONTS.bold,
+  },
+
+  cartPillBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.saffron,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: RADIUS.full,
+    gap: 4,
+  },
+
+  cartPillText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    ...FONTS.bold,
+  },
+
+  // ── Pagination Bar ────────────────────────────────────────
+  paginationBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 14,
+    paddingBottom: 6,
+    paddingTop: 1,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.07)',
+  },
+
+  paginationHintRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+
+  paginationHintText: {
+    fontSize: 9.5,
+    ...FONTS.bold,
+    color: 'rgba(255, 255, 255, 0.55)',
+    letterSpacing: 0.5,
+  },
+
+  dotsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+
+  dot: {
+    height: 4,
+    borderRadius: 2,
+  },
+
+  dotActive: {
+    width: 14,
+    backgroundColor: colors.saffron,
+  },
+
+  dotInactive: {
+    width: 5,
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
   },
 
   // ── Modal Sheet ───────────────────────────────────────────
