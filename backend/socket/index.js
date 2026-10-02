@@ -11,7 +11,7 @@ function initSocket(server) {
   });
 
   io.on('connection', (socket) => {
-    // Join a room scoped to a specific order
+    // Join an order-specific room
     socket.on('join:order', (orderId) => {
       socket.join(`order:${orderId}`);
     });
@@ -19,6 +19,15 @@ function initSocket(server) {
     // Leave an order-specific room
     socket.on('leave:order', (orderId) => {
       socket.leave(`order:${orderId}`);
+    });
+
+    // Join a user-specific room for real-time order/notification updates
+    socket.on('join:user', (userId) => {
+      if (userId) socket.join(`user:${userId}`);
+    });
+
+    socket.on('leave:user', (userId) => {
+      if (userId) socket.leave(`user:${userId}`);
     });
 
     // Join the shared kitchen room

@@ -4,7 +4,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { FONTS } from '../theme';
-import { Button } from './index';
+import Button from './Button';
 
 export default function EmptyState({ emoji, iconName, title, subtitle, action }) {
   const { colors } = useTheme();

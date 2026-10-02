@@ -2,8 +2,9 @@
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  SafeAreaView, ActivityIndicator, Alert,
+  ActivityIndicator, Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../context/ThemeContext';
 import { FONTS, RADIUS, SHADOW } from '../theme';
 import { StatusPill, Divider } from '../components';
@@ -249,9 +250,8 @@ export default function OrderDetailScreen({ navigation, route }) {
           {!isFinal && (
             <TouchableOpacity
               style={[styles.actionBtn, styles.actionBtnOutline]}
-              onPress={() => navigation.navigate('MainTabs', {
-                screen: 'Track',
-                params: { orderId: order._id || order.id },
+              onPress={() => navigation.navigate('Track', {
+                orderId: order._id || order.id,
               })}
               activeOpacity={0.85}
             >

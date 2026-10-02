@@ -8,7 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { useTheme } from '../context/ThemeContext';
-import { BannerCarousel, VegBadge } from '../components';
+import { BannerCarousel, VegBadge, ActiveOrderTracker } from '../components';
 import { FONTS, RADIUS, SHADOW } from '../theme';
 import api from '../api/client';
 
@@ -21,14 +21,29 @@ const QUICK_CATS = [
   { id: 'dessert',   label: 'Desserts',  emoji: '🍨' },
 ];
 
-export default function HomeScreen({ navigation }) {
+export default function HomeScreen({ navigation, route }) {
   const { user } = useAuth();
   const { addItem, removeItem, getQty } = useCart();
   const { colors, isDark } = useTheme();
   const firstName = user?.name?.split(' ')[0] || 'Foodie';
+  const initials = (user?.name || 'U')
+    .trim()
+    .split(/\s+/)
+    .map(w => w[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+
   const [refreshing, setRefreshing] = useState(false);
   const [popularItems, setPopularItems] = useState([]);
   const [selectedCat, setSelectedCat] = useState('all');
+  const [openTrackerModal, setOpenTrackerModal] = useState(false);
+
+  useEffect(() => {
+    if (route.params?.openTracker) {
+      setOpenTrackerModal(true);
+    }
+  }, [route.params?.openTracker]);
 
   async function loadData() {
     try {
@@ -55,7 +70,7 @@ export default function HomeScreen({ navigation }) {
     <View style={styles.container}>
       <StatusBar barStyle={colors.statusBarStyle} backgroundColor={colors.cardBg} />
 
-      {/* Top Bar with Location and Notifications */}
+      {/* Top Bar with Location and Zomato-Style Profile Avatar */}
       <View style={styles.topBar}>
         <View style={styles.locationContainer}>
           <View style={styles.locationIconWrap}>
@@ -70,12 +85,16 @@ export default function HomeScreen({ navigation }) {
           </View>
         </View>
 
+        {/* Zomato-style Top Right Profile Button */}
         <TouchableOpacity
-          style={styles.notifBtn}
-          onPress={() => navigation.navigate('Notifications')}
-          activeOpacity={0.8}
+          style={styles.profileAvatarBtn}
+          onPress={() => navigation.navigate('Profile')}
+          activeOpacity={0.85}
+          accessibilityLabel="Account and Profile"
         >
-          <Ionicons name="notifications-outline" size={20} color={colors.text} />
+          <View style={styles.profileAvatarCircle}>
+            <Text style={styles.profileAvatarText}>{initials}</Text>
+          </View>
         </TouchableOpacity>
       </View>
 
@@ -247,7 +266,7 @@ export default function HomeScreen({ navigation }) {
         <View style={styles.shortcutsRow}>
           <TouchableOpacity
             style={styles.shortcutCard}
-            onPress={() => navigation.navigate('MainTabs', { screen: 'Track' })}
+            onPress={() => setOpenTrackerModal(true)}
             activeOpacity={0.85}
           >
             <View style={[styles.shortcutIcon, { backgroundColor: isDark ? '#431407' : '#FFEDD5' }]}>
@@ -276,6 +295,13 @@ export default function HomeScreen({ navigation }) {
           </TouchableOpacity>
         </View>
       </ScrollView>
+
+      {/* Floating Bottom Active Order Tracker Capsule & Pop-up Modal */}
+      <ActiveOrderTracker
+        forceOpen={openTrackerModal}
+        onTrackerDismiss={() => setOpenTrackerModal(false)}
+        navigation={navigation}
+      />
     </View>
   );
 }
@@ -324,21 +350,31 @@ const createStyles = (colors, isDark) => StyleSheet.create({
     fontSize: 12,
     color: colors.textMuted,
   },
-  notifBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: colors.creamDark,
+  profileAvatarBtn: {
+    borderRadius: 22,
+    borderWidth: 2,
+    borderColor: colors.saffron,
+    padding: 2,
+  },
+  profileAvatarCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.saffron,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: colors.border,
+  },
+  profileAvatarText: {
+    color: '#FFFFFF',
+    fontSize: 13.5,
+    ...FONTS.heavy,
+    letterSpacing: 0.5,
   },
   scroll: {
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 36,
+    paddingBottom: 120,
   },
   searchBar: {
     flexDirection: 'row',

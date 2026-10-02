@@ -134,6 +134,19 @@ export default function TrackScreen({ route, navigation }) {
 
   return (
     <View style={styles.container}>
+      {/* Top Header Bar */}
+      <View style={styles.topHeader}>
+        <TouchableOpacity
+          style={styles.backBtn}
+          onPress={() => navigation.canGoBack() ? navigation.goBack() : navigation.navigate('MainTabs')}
+          activeOpacity={0.8}
+        >
+          <Ionicons name="arrow-back" size={22} color={colors.text} />
+        </TouchableOpacity>
+        <Text style={styles.topHeaderTitle}>Live Order Tracking</Text>
+        <View style={{ width: 40 }} />
+      </View>
+
       <ScrollView
         style={styles.screen}
         contentContainerStyle={styles.scrollContent}
@@ -439,6 +452,30 @@ const createStyles = (colors, isDark) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.cream,
+  },
+  topHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingTop: 46,
+    paddingBottom: 14,
+    backgroundColor: colors.cardBg,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderLight,
+  },
+  backBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.cream,
+  },
+  topHeaderTitle: {
+    fontSize: 18,
+    ...FONTS.heavy,
+    color: colors.text,
   },
   screen: {
     flex: 1,

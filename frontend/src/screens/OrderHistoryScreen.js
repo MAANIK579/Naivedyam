@@ -41,8 +41,8 @@ export default function OrderHistoryScreen({ navigation }) {
       const data = await api.reorder(order._id || order.id);
       Alert.alert('Reordered!', 'New order placed successfully.');
       navigation.navigate('MainTabs', {
-        screen: 'Track',
-        params: { orderId: data?.order?.id || '' },
+        screen: 'Home',
+        params: { openTracker: true, orderId: data?.order?.id || '' },
       });
     } catch (err) {
       Alert.alert('Error', err.message || 'Could not reorder this order');

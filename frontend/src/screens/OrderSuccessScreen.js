@@ -2,8 +2,9 @@
 import React, { useEffect, useRef } from 'react';
 import {
   View, Text, StyleSheet, Animated, Easing,
-  SafeAreaView, TouchableOpacity, Dimensions,
+  TouchableOpacity, Dimensions,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { FONTS, RADIUS, SHADOW } from '../theme';
@@ -172,7 +173,7 @@ export default function OrderSuccessScreen({ navigation, route }) {
       <View style={styles.footer}>
         <TouchableOpacity
           style={styles.trackBtn}
-          onPress={() => navigation.replace('MainTabs', { screen: 'Track', params: { orderId } })}
+          onPress={() => navigation.navigate('MainTabs', { screen: 'Home', params: { openTracker: true, orderId } })}
           activeOpacity={0.85}
         >
           <Ionicons name="location-outline" size={20} color={colors.white} />

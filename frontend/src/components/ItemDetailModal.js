@@ -9,7 +9,7 @@ import { useTheme } from '../context/ThemeContext';
 import { FONTS, RADIUS, SHADOW } from '../theme';
 import HeartButton from './HeartButton';
 import StarRating from './StarRating';
-import { VegBadge } from './index';
+import VegBadge from './VegBadge';
 import { useCart } from '../context/CartContext';
 import api from '../api/client';
 

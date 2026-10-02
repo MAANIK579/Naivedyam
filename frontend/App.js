@@ -3,6 +3,7 @@ import { NavigationContainer, DefaultTheme, DarkTheme, useNavigationContainerRef
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { View, Text, ActivityIndicator, StyleSheet, StatusBar } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
 import { ThemeProvider, useTheme }      from './src/context/ThemeContext';
@@ -116,21 +117,6 @@ function MainTabs() {
           tabBarLabel: 'Cart',
         }}
       />
-      <Tab.Screen name="Track" component={TrackScreen}
-        options={{
-          title: 'Live Tracking',
-          tabBarIcon: ({ focused }) => <TabIcon routeName="Track" focused={focused} colors={colors} />,
-          tabBarLabel: 'Track',
-        }}
-      />
-      <Tab.Screen name="Profile" component={ProfileScreen}
-        options={{
-          title: 'Account',
-          headerShown: false,
-          tabBarIcon: ({ focused }) => <TabIcon routeName="Profile" focused={focused} badgeCount={unreadCount} colors={colors} />,
-          tabBarLabel: 'Profile',
-        }}
-      />
     </Tab.Navigator>
   );
 }
@@ -157,6 +143,8 @@ function AppStack() {
   return (
     <Stack.Navigator screenOptions={commonHeader}>
       <Stack.Screen name="MainTabs"      component={MainTabs}           options={{ headerShown: false }} />
+      <Stack.Screen name="Profile"       component={ProfileScreen}      options={{ headerShown: false }} />
+      <Stack.Screen name="Track"         component={TrackScreen}        options={{ headerShown: false }} />
       <Stack.Screen name="Search"        component={SearchScreen}       options={{ title: 'Search Dishes' }} />
       <Stack.Screen name="Favorites"     component={FavoritesScreen}    options={{ title: 'My Favorites' }} />
       <Stack.Screen name="Addresses"     component={AddressesScreen}    options={{ title: 'Saved Addresses' }} />
@@ -225,19 +213,21 @@ function RootNavigator() {
 
 export default function App() {
   return (
-    <ThemeProvider>
-      <AuthProvider>
-        <SocketProvider>
-          <NotificationProvider>
-            <FavoritesProvider>
-              <CartProvider>
-                <RootNavigator />
-              </CartProvider>
-            </FavoritesProvider>
-          </NotificationProvider>
-        </SocketProvider>
-      </AuthProvider>
-    </ThemeProvider>
+    <SafeAreaProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <SocketProvider>
+            <NotificationProvider>
+              <FavoritesProvider>
+                <CartProvider>
+                  <RootNavigator />
+                </CartProvider>
+              </FavoritesProvider>
+            </NotificationProvider>
+          </SocketProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </SafeAreaProvider>
   );
 }
 

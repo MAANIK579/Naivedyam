@@ -28,7 +28,11 @@ export function SocketProvider({ children }) {
       autoConnect: true,
     });
 
-    socket.on('connect', () => setConnected(true));
+    socket.on('connect', () => {
+      setConnected(true);
+      const uId = user.id || user._id;
+      if (uId) socket.emit('join:user', uId);
+    });
     socket.on('disconnect', () => setConnected(false));
     socket.on('connect_error', (err) => console.warn('Socket connection error:', err.message));
 

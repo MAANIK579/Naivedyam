@@ -54,8 +54,16 @@ router.get(
     if (!order) return res.status(404).json({ error: 'Order not found' });
 
     // Authorization check: User must be order owner or admin
-    if (order.user.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+    const currentUserId = (req.user?.id || req.user?._id || '').toString();
+    const orderUserId = (order.user?._id || order.user || '').toString();
+    if (orderUserId !== currentUserId && req.user?.role !== 'admin') {
       return res.status(403).json({ error: 'Not authorized to view this order' });
+    }
+
+    let estimatedDelivery = order.estimated_delivery_time;
+    if (!estimatedDelivery && ['placed', 'confirmed', 'preparing', 'out_for_delivery'].includes(order.status)) {
+      const createdAtMs = new Date(order.created_at || Date.now()).getTime();
+      estimatedDelivery = new Date(createdAtMs + 35 * 60 * 1000);
     }
 
     const currentIndex = STATUS_STEPS.indexOf(order.status);
@@ -87,7 +95,7 @@ router.get(
       },
       steps,
       current_status: STATUS_META[order.status],
-      estimated_delivery: order.estimated_delivery_time,
+      estimated_delivery: estimatedDelivery,
     });
   })
 );
@@ -160,12 +168,23 @@ router.patch(
     // Emit socket event if Socket.IO is configured
     const io = req.app.get('io');
     if (io) {
-      io.to(`order:${order._id}`).emit('order:status_update', {
+      const payload = {
         orderId: order._id,
+        displayId: order.display_id,
         status: order.status,
         meta: STATUS_META[status] || { label: status, desc: '', eta: '' },
+        estimated_delivery: order.estimated_delivery_time,
         timestamp: new Date(),
-      });
+      };
+      io.to(`order:${order._id}`).emit('order:status_update', payload);
+      if (order.display_id) {
+        io.to(`order:${order.display_id}`).emit('order:status_update', payload);
+      }
+      const orderUserId = order.user?._id || order.user;
+      if (orderUserId) {
+        io.to(`user:${orderUserId}`).emit('order:status_update', payload);
+      }
+      io.emit('orders:updated');
     }
 
     res.json({ message: 'Status updated', status });

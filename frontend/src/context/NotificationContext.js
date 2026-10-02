@@ -126,10 +126,7 @@ export function NotificationProvider({ children }) {
 
     // Navigate based on notification type
     if (data?.orderId) {
-      navigationRef.current.navigate('MainTabs', {
-        screen: 'Track',
-        params: { orderId: data.orderId },
-      });
+      navigationRef.current.navigate('Track', { orderId: data.orderId });
     } else if (data?.type === 'promotion') {
       navigationRef.current.navigate('Coupon');
     } else {

@@ -10,49 +10,7 @@ import { useTheme } from '../context/ThemeContext';
 import { FONTS, RADIUS, SHADOW, SPACING } from '../theme';
 
 // ── Button ────────────────────────────────────────────────
-export function Button({ title, onPress, loading, variant = 'primary', style, textStyle, icon }) {
-  const { colors } = useTheme();
-
-  const isOutline = variant === 'outline';
-  const isSecondary = variant === 'secondary';
-
-  const bg = variant === 'primary'   ? colors.saffron
-           : variant === 'secondary' ? colors.creamDark
-           : variant === 'outline'   ? 'transparent'
-           : variant === 'green'     ? colors.green
-           : variant === 'danger'    ? colors.error
-           : colors.saffron;
-
-  const borderColor = isOutline ? colors.saffron : isSecondary ? colors.border : 'transparent';
-  const color = isOutline ? colors.saffron : isSecondary ? colors.text : '#FFFFFF';
-
-  return (
-    <TouchableOpacity
-      onPress={onPress}
-      disabled={loading}
-      style={[
-        styles.btn,
-        {
-          backgroundColor: bg,
-          borderColor,
-          borderWidth: isOutline || isSecondary ? 1 : 0,
-          opacity: loading ? 0.7 : 1,
-        },
-        style
-      ]}
-      activeOpacity={0.82}
-    >
-      {loading ? (
-        <ActivityIndicator color={color} size="small" />
-      ) : (
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-          {icon && <Ionicons name={icon} size={18} color={color} />}
-          <Text style={[styles.btnText, { color }, textStyle]}>{title}</Text>
-        </View>
-      )}
-    </TouchableOpacity>
-  );
-}
+export { default as Button } from './Button';
 
 // ── Input ──────────────────────────────────────────────────
 export function Input({ label, style, inputStyle, error, leftIcon, ...props }) {
@@ -108,15 +66,7 @@ export function Card({ children, style, elevated = false, onPress }) {
 }
 
 // ── VegBadge (Official Standard Indian FSSAI Veg Symbol) ────
-export function VegBadge({ isVeg }) {
-  const color = isVeg ? '#16A34A' : '#DC2626';
-
-  return (
-    <View style={[styles.vegBadge, { borderColor: color }]}>
-      <View style={[styles.vegDot, { backgroundColor: color }]} />
-    </View>
-  );
-}
+export { default as VegBadge } from './VegBadge';
 
 // ── StatusPill ────────────────────────────────────────────
 export function StatusPill({ status }) {
@@ -216,20 +166,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: SPACING.lg,
   },
-  vegBadge: {
-    width: 17,
-    height: 17,
-    borderWidth: 1.5,
-    borderRadius: 3,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  vegDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 3.5,
-  },
   pill: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -258,3 +194,5 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
 });
+
+export { default as ActiveOrderTracker } from './ActiveOrderTracker';

@@ -8,7 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import api from '../api/client';
 import { useCart } from '../context/CartContext';
 import { useTheme } from '../context/ThemeContext';
-import { VegBadge, ItemDetailModal } from '../components';
+import { VegBadge, ItemDetailModal, ActiveOrderTracker } from '../components';
 import { FONTS, RADIUS, SHADOW } from '../theme';
 
 export default function MenuScreen({ route, navigation }) {
@@ -272,6 +272,9 @@ export default function MenuScreen({ route, navigation }) {
           </View>
         </TouchableOpacity>
       )}
+
+      {/* Floating live order tracking capsule if user has active order and cart is empty */}
+      {itemCount === 0 && <ActiveOrderTracker navigation={navigation} />}
     </View>
   );
 }
