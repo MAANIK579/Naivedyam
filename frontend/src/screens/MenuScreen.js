@@ -1,78 +1,136 @@
-// src/screens/MenuScreen.js — Modern High-Contrast Menu & Dish Ordering Screen
+// src/screens/MenuScreen.js — Craving Mood Menu Screen
 import React, { useEffect, useState, useCallback } from 'react';
 import {
   View, Text, FlatList, ScrollView, StyleSheet,
-  TouchableOpacity, ActivityIndicator, Alert, RefreshControl, Image,
+  TouchableOpacity, ActivityIndicator, Alert, RefreshControl,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../api/client';
 import { useCart } from '../context/CartContext';
 import { useTheme } from '../context/ThemeContext';
-import { VegBadge, ItemDetailModal, ActiveOrderTracker } from '../components';
-import { FONTS, RADIUS, SHADOW } from '../theme';
+import { ItemDetailModal, ActiveOrderTracker, Plate } from '../components';
+import { FONTS, RADIUS, SHADOW, MOODS } from '../theme';
+
+const MOOD_TABS = [
+  { id: 'comfort', name: 'Comfort', subtitle: 'Warm, slow, heavy.', color: '#F5B042', blobColor: '#FFD998', textColor: '#2B1A05' },
+  { id: 'fresh',   name: 'Fresh',   subtitle: 'Light, crisp, bright.', color: '#8FE0A0', blobColor: '#BFF0CA', textColor: '#0F2A10' },
+  { id: 'fire',    name: 'Fire',    subtitle: 'Spicy, smoky, bold.', color: '#EE5F45', blobColor: '#FF9783', textColor: '#FFFFFF' },
+  { id: 'sweet',   name: 'Sweet',   subtitle: 'Dessert, treat, joy.', color: '#F6BDD3', blobColor: '#FDE0EC', textColor: '#3A0F25' },
+];
 
 export default function MenuScreen({ route, navigation }) {
-  const { category: initialCat } = route.params || {};
+  const { mood: initialMood = 'comfort', autoOpenId } = route.params || {};
   const { addItem, removeItem, getQty, itemCount, itemTotal } = useCart();
   const { colors, isDark } = useTheme();
 
-  const [categories, setCategories] = useState([]);
-  const [items,      setItems]      = useState([]);
-  const [activeCat,  setActiveCat]  = useState(initialCat || 'all');
-  const [loading,    setLoading]    = useState(true);
+  const [activeMood, setActiveMood] = useState(initialMood);
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
 
-  // Load categories once
-  useEffect(() => {
-    api.getCategories()
-      .then(d => setCategories([{ _id: 'all', name: 'All Dishes' }, ...(d.categories || [])]))
-      .catch(() => {});
-  }, []);
+  const currentMoodConfig = MOODS[activeMood] || MOODS.comfort;
 
-  // Header search button
+  // Header options: back button + search
   useEffect(() => {
     navigation.setOptions({
+      headerShown: true,
+      headerTitle: '',
+      headerStyle: { backgroundColor: '#121A16' },
+      headerTintColor: '#FFFFFF',
+      headerLeft: () => (
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles_static.backBtnCircle}
+          activeOpacity={0.8}
+          accessibilityLabel="Back"
+        >
+          <Ionicons name="arrow-back" size={20} color="#FFFFFF" />
+        </TouchableOpacity>
+      ),
       headerRight: () => (
         <TouchableOpacity
           onPress={() => navigation.navigate('Search')}
-          style={{ marginRight: 16 }}
+          style={styles_static.searchBtnCircle}
           activeOpacity={0.8}
         >
-          <Ionicons name="search" size={22} color={colors.white} />
+          <Ionicons name="search" size={19} color="#FFFFFF" />
         </TouchableOpacity>
       ),
     });
-  }, [navigation, colors]);
+  }, [navigation]);
 
-  // Load items when category changes
+  // Load items
   const loadItems = useCallback(async (isRefresh = false) => {
     if (!isRefresh) setLoading(true);
     try {
-      const params = activeCat !== 'all' ? { category: activeCat } : {};
-      const data = await api.getMenuItems(params);
+      const data = await api.getMenuItems();
       setItems(data.items || []);
+
+      if (autoOpenId && data.items) {
+        const found = data.items.find((i) => (i._id || i.id) === autoOpenId);
+        if (found) {
+          setSelectedItem(found);
+          setShowDetailModal(true);
+        }
+      }
     } catch (err) {
       Alert.alert('Error', err.message);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [activeCat]);
+  }, [autoOpenId]);
 
-  useEffect(() => { loadItems(); }, [loadItems]);
+  useEffect(() => {
+    loadItems();
+  }, [loadItems]);
 
   function onRefresh() {
     setRefreshing(true);
     loadItems(true);
   }
 
-  const styles = createStyles(colors, isDark);
+  // Filter items loosely per mood or distribute smartly
+  const filteredDishes = items.filter((item) => {
+    if (activeMood === 'comfort') {
+      return (
+        item.category === 'dal-sabzi' ||
+        item.category === 'thali' ||
+        item.category === 'roti' ||
+        (item.name && /dal|thali|paneer|butter|kofta/i.test(item.name))
+      );
+    }
+    if (activeMood === 'fresh') {
+      return (
+        item.category === 'snacks' ||
+        (item.name && /salad|raita|soup|steamed|green|fresh/i.test(item.name))
+      );
+    }
+    if (activeMood === 'fire') {
+      return (
+        (item.name && /spicy|chilli|masala|kadai|tandoori|fire/i.test(item.name)) ||
+        item.spice_level === 'High'
+      );
+    }
+    if (activeMood === 'sweet') {
+      return (
+        item.category === 'dessert' ||
+        (item.name && /halwa|jamun|kheer|rasgulla|sweet|ice/i.test(item.name))
+      );
+    }
+    return true;
+  });
 
-  function renderItem({ item }) {
+  // Fallback to all items if filtered category is sparse
+  const displayedItems = filteredDishes.length > 0 ? filteredDishes : items;
+
+  const styles = createStyles(currentMoodConfig);
+
+  function renderDishRow({ item }) {
     const itemId = item._id || item.id;
-    const qty    = getQty(itemId);
+    const qty = getQty(itemId);
 
     return (
       <TouchableOpacity
@@ -81,125 +139,69 @@ export default function MenuScreen({ route, navigation }) {
           setSelectedItem(item);
           setShowDetailModal(true);
         }}
-        activeOpacity={0.92}
+        activeOpacity={0.9}
       >
-        {/* Left Column: Details */}
+        {/* Plate component with mood radial gradient */}
+        <Plate
+          imageUrl={item.image_url}
+          mood={activeMood}
+          size={74}
+        />
+
+        {/* Dish Title & Cook Time / Price */}
         <View style={styles.dishDetails}>
-          <View style={styles.vegRow}>
-            <VegBadge isVeg={item.is_veg === true || item.is_veg === 1} />
-            {item.tags?.[0] && (
-              <View style={styles.tagPill}>
-                <Text style={styles.tagPillText}>{item.tags[0]}</Text>
-              </View>
-            )}
-          </View>
-
-          <Text style={styles.dishName}>{item.name}</Text>
-          <Text style={styles.dishPrice}>₹{item.price}</Text>
-
-          {item.avg_rating > 0 && (
-            <View style={styles.ratingRow}>
-              <View style={styles.ratingBadge}>
-                <Ionicons name="star" size={10} color="#FFFFFF" />
-                <Text style={styles.ratingText}>{item.avg_rating.toFixed(1)}</Text>
-              </View>
-              {item.rating_count > 0 && (
-                <Text style={styles.ratingCount}>({item.rating_count})</Text>
-              )}
-            </View>
-          )}
-
-          <Text style={styles.dishDesc} numberOfLines={2}>
-            {item.description || 'Cooked fresh with pure ingredients and traditional recipe.'}
+          <Text style={styles.dishName} numberOfLines={2}>
+            {item.name}
+          </Text>
+          <Text style={styles.dishMeta}>
+            {item.cook_time || 18} min · ₹{item.price}
           </Text>
         </View>
 
-        {/* Right Column: Photo + Overlapping Add Button */}
-        <View style={styles.dishMediaCol}>
-          <View style={styles.dishImageWrap}>
-            {item.image_url ? (
-              <Image
-                source={{ uri: item.image_url }}
-                style={styles.dishImage}
-                resizeMode="cover"
-              />
-            ) : (
-              <View style={styles.emojiFallback}>
-                <Text style={{ fontSize: 48 }}>{item.emoji || '🥘'}</Text>
-              </View>
-            )}
-          </View>
-
-          {/* Overlapping Add / Stepper Button */}
-          <View style={styles.addBtnContainer}>
-            {qty === 0 ? (
-              <TouchableOpacity
-                style={styles.addBtn}
-                onPress={(e) => {
-                  e?.stopPropagation?.();
-                  addItem({ ...item, id: itemId });
-                }}
-                activeOpacity={0.85}
-              >
-                <Text style={styles.addBtnText}>ADD</Text>
-                <Ionicons name="add" size={15} color={colors.saffron} />
-              </TouchableOpacity>
-            ) : (
-              <View style={styles.qtyCtrl}>
-                <TouchableOpacity
-                  style={styles.qtyBtn}
-                  onPress={(e) => {
-                    e?.stopPropagation?.();
-                    removeItem(itemId);
-                  }}
-                >
-                  <Ionicons name="remove" size={14} color="#FFFFFF" />
-                </TouchableOpacity>
-                <Text style={styles.qtyNum}>{qty}</Text>
-                <TouchableOpacity
-                  style={styles.qtyBtn}
-                  onPress={(e) => {
-                    e?.stopPropagation?.();
-                    addItem({ ...item, id: itemId });
-                  }}
-                >
-                  <Ionicons name="add" size={14} color="#FFFFFF" />
-                </TouchableOpacity>
-              </View>
-            )}
-          </View>
-        </View>
+        {/* 44px Round '+' Add Button in Active Mood Color */}
+        <TouchableOpacity
+          style={[styles.addRoundBtn, { backgroundColor: currentMoodConfig.color }]}
+          onPress={(e) => {
+            e?.stopPropagation?.();
+            addItem({ ...item, id: itemId });
+          }}
+          activeOpacity={0.85}
+          accessibilityLabel={`Add ${item.name}`}
+        >
+          <Ionicons name="add" size={24} color={currentMoodConfig.textColor} />
+        </TouchableOpacity>
       </TouchableOpacity>
     );
   }
 
   return (
     <View style={styles.screen}>
-      {/* Category Horizontal Filter Bar */}
-      <View style={styles.filterBarContainer}>
+      {/* Mood Selector Tabs */}
+      <View style={styles.moodTabsRow}>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.filterBarContent}
+          contentContainerStyle={styles.moodTabsScroll}
         >
-          {categories.map((cat) => {
-            const catId = cat._id || cat.id;
-            const isActive = activeCat === catId;
+          {MOOD_TABS.map((mood) => {
+            const isActive = activeMood === mood.id;
             return (
               <TouchableOpacity
-                key={catId}
+                key={mood.id}
                 style={[
-                  styles.catBtn,
-                  isActive && styles.catBtnActive,
+                  styles.moodTabPill,
+                  isActive && { backgroundColor: mood.color, borderColor: mood.color },
                 ]}
-                onPress={() => setActiveCat(catId)}
-                activeOpacity={0.8}
+                onPress={() => setActiveMood(mood.id)}
+                activeOpacity={0.85}
               >
-                {cat.emoji && catId !== 'all' ? (
-                  <Text style={styles.catEmoji}>{cat.emoji}</Text>
-                ) : null}
-                <Text style={[styles.catLabel, isActive && styles.catLabelActive]}>
-                  {cat.name}
+                <Text
+                  style={[
+                    styles.moodTabPillText,
+                    isActive && { color: mood.textColor, ...FONTS.heavy },
+                  ]}
+                >
+                  {mood.name}
                 </Text>
               </TouchableOpacity>
             );
@@ -207,33 +209,50 @@ export default function MenuScreen({ route, navigation }) {
         </ScrollView>
       </View>
 
-      {/* Main Items List */}
+      {/* Main List with Huge Bold Mood Header Card matching PDF Page 2 */}
       {loading && !refreshing ? (
         <View style={styles.center}>
-          <ActivityIndicator size="large" color={colors.saffron} />
-          <Text style={styles.loadingText}>Fetching freshly prepared menu...</Text>
+          <ActivityIndicator size="large" color={currentMoodConfig.color} />
+          <Text style={styles.loadingText}>Loading {currentMoodConfig.name} crave list...</Text>
         </View>
       ) : (
         <FlatList
-          data={items}
-          keyExtractor={i => i._id || i.id}
-          renderItem={renderItem}
-          contentContainerStyle={styles.list}
+          data={displayedItems}
+          keyExtractor={(i) => i._id || i.id}
+          renderItem={renderDishRow}
+          contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
-          ItemSeparatorComponent={() => <View style={styles.itemSeparator} />}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              colors={[colors.saffron]}
-              tintColor={colors.saffron}
+              colors={[currentMoodConfig.color]}
+              tintColor={currentMoodConfig.color}
             />
           }
-          ListEmptyComponent={
-            <View style={styles.center}>
-              <Ionicons name="restaurant-outline" size={48} color={colors.border} />
-              <Text style={styles.emptyTitle}>No dishes found</Text>
-              <Text style={styles.emptySubtitle}>Try choosing another category above.</Text>
+          ListHeaderComponent={
+            <View
+              style={[
+                styles.moodHeaderCard,
+                { backgroundColor: currentMoodConfig.color },
+              ]}
+            >
+              {/* Offset Corner Blob Circle matching PDF Page 2 */}
+              <View
+                style={[
+                  styles.headerBlobCircle,
+                  { backgroundColor: currentMoodConfig.blobColor },
+                ]}
+              />
+
+              <View style={styles.headerContent}>
+                <Text style={[styles.headerTitle, { color: currentMoodConfig.textColor }]}>
+                  {currentMoodConfig.name}
+                </Text>
+                <Text style={[styles.headerSubtitle, { color: currentMoodConfig.textColor }]}>
+                  {currentMoodConfig.subtitle}
+                </Text>
+              </View>
             </View>
           }
         />
@@ -243,6 +262,7 @@ export default function MenuScreen({ route, navigation }) {
       <ItemDetailModal
         visible={showDetailModal}
         item={selectedItem}
+        mood={activeMood}
         onClose={() => {
           setShowDetailModal(false);
           setSelectedItem(null);
@@ -250,273 +270,163 @@ export default function MenuScreen({ route, navigation }) {
         navigation={navigation}
       />
 
-      {/* Dynamic Floating Bottom Bar (Cart & Live Order Tracking) */}
+      {/* Dynamic Floating Bottom Bar (Sliding Live Order Tracking & Cart) */}
       <ActiveOrderTracker navigation={navigation} />
     </View>
   );
 }
 
-const createStyles = (colors, isDark) => StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: colors.cream,
-  },
-  filterBarContainer: {
-    backgroundColor: colors.cardBg,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    paddingVertical: 10,
-  },
-  filterBarContent: {
-    paddingHorizontal: 16,
-    gap: 8,
-  },
-  catBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: RADIUS.full,
-    backgroundColor: colors.creamDark,
+const styles_static = StyleSheet.create({
+  backBtnCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#1B2620',
     borderWidth: 1,
-    borderColor: colors.border,
-    gap: 6,
+    borderColor: '#33463C',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 14,
   },
-  catBtnActive: {
-    backgroundColor: colors.saffron,
-    borderColor: colors.saffron,
-  },
-  catEmoji: {
-    fontSize: 14,
-  },
-  catLabel: {
-    fontSize: 13,
-    ...FONTS.semibold,
-    color: colors.textMuted,
-  },
-  catLabelActive: {
-    color: '#FFFFFF',
-    ...FONTS.bold,
-  },
-  list: {
-    padding: 16,
-    paddingBottom: 130,
-  },
-  itemSeparator: {
-    height: 1,
-    backgroundColor: colors.border,
-    marginVertical: 14,
-  },
-  dishCard: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    backgroundColor: colors.cardBg,
-    borderRadius: RADIUS.lg,
-    padding: 12,
+  searchBtnCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#1B2620',
     borderWidth: 1,
-    borderColor: colors.border,
-    ...SHADOW.small,
-  },
-  dishDetails: {
-    flex: 1,
-    paddingRight: 14,
-  },
-  vegRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 6,
-  },
-  tagPill: {
-    backgroundColor: colors.saffronPale,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  tagPillText: {
-    fontSize: 10,
-    ...FONTS.bold,
-    color: colors.saffron,
-    textTransform: 'uppercase',
-  },
-  dishName: {
-    fontSize: 16,
-    ...FONTS.bold,
-    color: colors.text,
-    marginBottom: 4,
-  },
-  dishPrice: {
-    fontSize: 16,
-    ...FONTS.heavy,
-    color: colors.text,
-    marginBottom: 4,
-  },
-  ratingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginBottom: 6,
-  },
-  ratingBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#15803D',
-    paddingHorizontal: 5,
-    paddingVertical: 2,
-    borderRadius: 4,
-    gap: 3,
-  },
-  ratingText: {
-    fontSize: 11,
-    ...FONTS.bold,
-    color: '#FFFFFF',
-  },
-  ratingCount: {
-    fontSize: 11,
-    color: colors.textMuted,
-  },
-  dishDesc: {
-    fontSize: 12.5,
-    color: colors.textMuted,
-    lineHeight: 17,
-  },
-  dishMediaCol: {
-    width: 110,
-    alignItems: 'center',
-  },
-  dishImageWrap: {
-    width: 110,
-    height: 100,
-    borderRadius: RADIUS.md,
-    backgroundColor: colors.creamDark,
-    overflow: 'hidden',
-  },
-  dishImage: {
-    width: '100%',
-    height: '100%',
-  },
-  emojiFallback: {
-    width: '100%',
-    height: '100%',
+    borderColor: '#33463C',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  addBtnContainer: {
-    marginTop: -16,
-    ...SHADOW.medium,
-  },
-  addBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.cardBg,
-    borderColor: colors.saffron,
-    borderWidth: 1.5,
-    borderRadius: RADIUS.md,
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    gap: 4,
-  },
-  addBtnText: {
-    fontSize: 13,
-    ...FONTS.heavy,
-    color: colors.saffron,
-    letterSpacing: 0.3,
-  },
-  qtyCtrl: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.saffron,
-    borderRadius: RADIUS.md,
-    paddingHorizontal: 6,
-    paddingVertical: 5,
-  },
-  qtyBtn: {
-    width: 22,
-    height: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  qtyNum: {
-    fontSize: 13.5,
-    ...FONTS.heavy,
-    color: '#FFFFFF',
-    minWidth: 24,
-    textAlign: 'center',
-  },
-  center: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 32,
-  },
-  loadingText: {
-    color: colors.textMuted,
-    marginTop: 12,
-    fontSize: 14,
-  },
-  emptyTitle: {
-    fontSize: 16,
-    ...FONTS.bold,
-    color: colors.text,
-    marginTop: 12,
-  },
-  emptySubtitle: {
-    fontSize: 13,
-    color: colors.textMuted,
-    marginTop: 4,
-  },
-  floatingCart: {
-    position: 'absolute',
-    bottom: 18,
-    left: 16,
-    right: 16,
-    backgroundColor: colors.saffron,
-    borderRadius: RADIUS.lg,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    ...SHADOW.large,
-  },
-  cartLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  cartBadge: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: 'rgba(0,0,0,0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cartBadgeText: {
-    ...FONTS.heavy,
-    fontSize: 13,
-    color: '#FFFFFF',
-  },
-  cartItemText: {
-    fontSize: 10,
-    ...FONTS.bold,
-    color: 'rgba(255,255,255,0.85)',
-    letterSpacing: 0.5,
-  },
-  cartPriceText: {
-    fontSize: 16,
-    ...FONTS.heavy,
-    color: '#FFFFFF',
-  },
-  cartRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  viewCartText: {
-    fontSize: 14,
-    ...FONTS.heavy,
-    color: '#FFFFFF',
-    letterSpacing: 0.5,
+    marginRight: 14,
   },
 });
+
+const createStyles = (moodConfig) =>
+  StyleSheet.create({
+    screen: {
+      flex: 1,
+      backgroundColor: '#121A16',
+    },
+    moodTabsRow: {
+      backgroundColor: '#121A16',
+      borderBottomWidth: 1,
+      borderBottomColor: '#1B2620',
+      paddingVertical: 10,
+    },
+    moodTabsScroll: {
+      paddingHorizontal: 20,
+      gap: 10,
+    },
+    moodTabPill: {
+      paddingHorizontal: 18,
+      paddingVertical: 8,
+      borderRadius: RADIUS.chip,
+      backgroundColor: '#1B2620',
+      borderWidth: 1,
+      borderColor: '#33463C',
+    },
+    moodTabPillText: {
+      fontSize: 14,
+      ...FONTS.bold,
+      color: '#A3B5AA',
+    },
+    listContent: {
+      paddingHorizontal: 20,
+      paddingTop: 14,
+      paddingBottom: 130,
+      gap: 12,
+    },
+    moodHeaderCard: {
+      height: 165,
+      borderRadius: 28,
+      padding: 22,
+      justifyContent: 'space-between',
+      overflow: 'hidden',
+      position: 'relative',
+      marginBottom: 16,
+      shadowColor: '#000000',
+      shadowOffset: { width: 0, height: 6 },
+      shadowOpacity: 0.25,
+      shadowRadius: 12,
+      elevation: 6,
+    },
+    headerBlobCircle: {
+      position: 'absolute',
+      top: -30,
+      right: -30,
+      width: 140,
+      height: 140,
+      borderRadius: 70,
+      opacity: 0.85,
+    },
+    headerContent: {
+      flex: 1,
+      justifyContent: 'space-between',
+      zIndex: 1,
+    },
+    headerTitle: {
+      fontSize: 36,
+      ...FONTS.heavy,
+      letterSpacing: -1,
+    },
+    headerSubtitle: {
+      fontSize: 14.5,
+      ...FONTS.bold,
+      opacity: 0.9,
+    },
+    dishCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: '#1B2620',
+      borderRadius: 26,
+      borderWidth: 1,
+      borderColor: '#33463C',
+      padding: 14,
+      gap: 14,
+      shadowColor: '#000000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.2,
+      shadowRadius: 6,
+      elevation: 3,
+    },
+    dishDetails: {
+      flex: 1,
+      paddingRight: 6,
+    },
+    dishName: {
+      fontSize: 16.5,
+      ...FONTS.heavy,
+      color: '#FFFFFF',
+      lineHeight: 21,
+    },
+    dishMeta: {
+      fontSize: 13,
+      color: '#A3B5AA',
+      marginTop: 4,
+      ...FONTS.medium,
+    },
+    addRoundBtn: {
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      alignItems: 'center',
+      justifyContent: 'center',
+      shadowColor: '#000000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.3,
+      shadowRadius: 4,
+      elevation: 4,
+    },
+    center: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: 32,
+    },
+    loadingText: {
+      color: '#A3B5AA',
+      marginTop: 12,
+      fontSize: 14,
+      ...FONTS.medium,
+    },
+  });

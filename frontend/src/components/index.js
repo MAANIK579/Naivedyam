@@ -196,3 +196,4 @@ const styles = StyleSheet.create({
 });
 
 export { default as ActiveOrderTracker } from './ActiveOrderTracker';
+export { default as Plate } from './Plate';

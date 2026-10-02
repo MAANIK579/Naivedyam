@@ -48,6 +48,7 @@ const Tab   = createBottomTabNavigator();
 const TAB_ICONS = {
   Home:    { focused: 'home',       unfocused: 'home-outline' },
   Menu:    { focused: 'restaurant', unfocused: 'restaurant-outline' },
+  Orders:  { focused: 'receipt',    unfocused: 'receipt-outline' },
   Cart:    { focused: 'cart',       unfocused: 'cart-outline' },
   Track:   { focused: 'location',   unfocused: 'location-outline' },
   Profile: { focused: 'person',     unfocused: 'person-outline' },
@@ -56,14 +57,14 @@ const TAB_ICONS = {
 function TabIcon({ routeName, focused, badgeCount, colors }) {
   const icons = TAB_ICONS[routeName] || TAB_ICONS.Home;
   const iconName = focused ? icons.focused : icons.unfocused;
-  const color = focused ? colors.saffron : colors.tabInactive;
+  const color = focused ? '#F5B042' : '#A3B5AA';
 
   return (
     <View style={{ alignItems: 'center', position: 'relative' }}>
       <Ionicons name={iconName} size={22} color={color} />
       {badgeCount > 0 && (
-        <View style={[styles.badge, { backgroundColor: colors.saffron, borderColor: colors.tabBarBg }]}>
-          <Text style={[styles.badgeTxt, { color: '#FFFFFF' }]}>{badgeCount > 9 ? '9+' : badgeCount}</Text>
+        <View style={[styles.badge, { backgroundColor: '#F5B042', borderColor: '#121A16' }]}>
+          <Text style={[styles.badgeTxt, { color: '#2B1A05' }]}>{badgeCount > 9 ? '9+' : badgeCount}</Text>
         </View>
       )}
     </View>
@@ -77,20 +78,20 @@ function MainTabs() {
 
   const screenOpts = {
     tabBarStyle: {
-      backgroundColor: colors.tabBarBg,
-      borderTopColor: colors.tabBarBorder,
+      backgroundColor: '#121A16',
+      borderTopColor: '#1B2620',
       borderTopWidth: 1,
-      height: 62,
+      height: 64,
       paddingBottom: 8,
       paddingTop: 6,
       elevation: 4,
     },
-    tabBarActiveTintColor:   colors.saffron,
-    tabBarInactiveTintColor: colors.tabInactive,
+    tabBarActiveTintColor:   '#F5B042',
+    tabBarInactiveTintColor: '#A3B5AA',
     tabBarLabelStyle:        { ...FONTS.bold, fontSize: 11 },
-    headerStyle:             { backgroundColor: colors.cardBg },
-    headerTitleStyle:        { color: colors.text, ...FONTS.heavy, fontSize: 18 },
-    headerTintColor:         colors.text,
+    headerStyle:             { backgroundColor: '#121A16' },
+    headerTitleStyle:        { color: '#FFFFFF', ...FONTS.heavy, fontSize: 18 },
+    headerTintColor:         '#FFFFFF',
     headerShadowVisible:     false,
   };
 
@@ -103,11 +104,25 @@ function MainTabs() {
           tabBarLabel: 'Home',
         }}
       />
+      <Tab.Screen name="Orders" component={OrderHistoryScreen}
+        options={{
+          headerShown: false,
+          tabBarIcon: ({ focused }) => <TabIcon routeName="Orders" focused={focused} colors={colors} />,
+          tabBarLabel: 'Orders',
+        }}
+      />
       <Tab.Screen name="Menu" component={MenuScreen}
         options={{
           title: 'Menu',
           tabBarIcon: ({ focused }) => <TabIcon routeName="Menu" focused={focused} colors={colors} />,
           tabBarLabel: 'Menu',
+        }}
+      />
+      <Tab.Screen name="Profile" component={ProfileScreen}
+        options={{
+          headerShown: false,
+          tabBarIcon: ({ focused }) => <TabIcon routeName="Profile" focused={focused} colors={colors} />,
+          tabBarLabel: 'Profile',
         }}
       />
     </Tab.Navigator>

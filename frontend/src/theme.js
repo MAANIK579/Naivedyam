@@ -1,114 +1,126 @@
-// src/theme.js — Modern High-Contrast Culinary Design System (Light & Dark)
+// src/theme.js — Craving Design Tokens for Navedyam App
+// Exact tokens from design specification:
+// bg: #121A16 | card: #1B2620 | border: #33463C | text: #FFFFFF | muted: #A3B5AA
+// mood-comfort: #F5B042, blob #FFD998, text #2B1A05
+// mood-fresh: #8FE0A0, blob #BFF0CA, text #0F2A10
+// mood-fire: #EE5F45, blob #FF9783, text #FFFFFF
+// mood-sweet: #F6BDD3, blob #FDE0EC, text #3A0F25
 
-export const LIGHT_COLORS = {
-  // Brand accents (Appetizing Saffron / Tangerine)
-  saffron:      '#EA580C',    // Vibrant warm saffron-orange
-  saffronLight: '#FB923C',
-  saffronDeep:  '#C2410C',
-  saffronPale:  '#FFF7ED',    // Orange-50 warm tint
-
-  // Background tones
-  cream:        '#F8FAFC',    // Slate-50 clean canvas
-  creamDark:    '#F1F5F9',    // Slate-100 secondary surface
-
-  // Accent colors
-  turmeric:     '#D97706',    // Amber-600
-
-  // Neutral darks for text and headers
-  brown:        '#0F172A',    // Slate-900 header
-  brownMid:     '#1E293B',    // Slate-800
-  brownLight:   '#334155',    // Slate-700
-
-  // Fresh green for pure veg & success
-  green:        '#16A34A',    // Emerald-600 pure veg
-  greenLight:   '#22C55E',
-  greenPale:    '#DCFCE7',
-
-  // High-contrast text
-  text:         '#0F172A',    // Slate-900 crisp primary text
-  textMuted:    '#64748B',    // Slate-500 secondary
-  textLight:    '#94A3B8',    // Slate-400 placeholder/meta
-
-  // Surfaces
-  white:        '#FFFFFF',
-  cardBg:       '#FFFFFF',
-  cardElevated: '#FFFFFF',
-
-  // Crisp borders
-  border:       '#E2E8F0',    // Slate-200 clean border
-  borderLight:  '#F1F5F9',    // Slate-100 hairline divider
-
-  // Status colors
-  error:        '#DC2626',
-  errorPale:    '#FEF2F2',
-  success:      '#16A34A',
-  successPale:  '#F0FDF4',
-
-  // Overlays
-  overlay:      'rgba(15, 23, 42, 0.65)',
-
-  // Tab bar
-  tabBarBg:     '#FFFFFF',
-  tabBarBorder: '#E2E8F0',
-  tabInactive:  '#94A3B8',
-
-  // Status bar
-  statusBarStyle: 'dark-content',
+export const MOODS = {
+  comfort: {
+    id: 'comfort',
+    name: 'Comfort',
+    subtitle: 'Warm, slow, heavy.',
+    color: '#F5B042',
+    blobColor: '#FFD998',
+    textColor: '#2B1A05',
+    gradientFrom: '#E69E2E',
+    gradientTo: '#FCD78E',
+  },
+  fresh: {
+    id: 'fresh',
+    name: 'Fresh',
+    subtitle: 'Light, crisp, bright.',
+    color: '#8FE0A0',
+    blobColor: '#BFF0CA',
+    textColor: '#0F2A10',
+    gradientFrom: '#74CD86',
+    gradientTo: '#C2FAD2',
+  },
+  fire: {
+    id: 'fire',
+    name: 'Fire',
+    subtitle: 'Spicy, smoky, bold.',
+    color: '#EE5F45',
+    blobColor: '#FF9783',
+    textColor: '#FFFFFF',
+    gradientFrom: '#DE4529',
+    gradientTo: '#FFA08E',
+  },
+  sweet: {
+    id: 'sweet',
+    name: 'Sweet',
+    subtitle: 'Dessert, treat, joy.',
+    color: '#F6BDD3',
+    blobColor: '#FDE0EC',
+    textColor: '#3A0F25',
+    gradientFrom: '#EAA2BF',
+    gradientTo: '#FFE3EF',
+  },
 };
 
 export const DARK_COLORS = {
-  // Brand accents (Luminous Saffron / Amber)
-  saffron:      '#F97316',    // Vibrant Orange-500
-  saffronLight: '#FB923C',
-  saffronDeep:  '#EA580C',
-  saffronPale:  '#431407',    // Deep warm amber tint
+  // Brand accents & moods
+  saffron:      '#F5B042',    // Primary mood accent (Comfort amber)
+  saffronLight: '#FFD998',
+  saffronDeep:  '#E69E2E',
+  saffronPale:  '#2B1A05',
 
-  // Background tones (Deep Obsidian & Charcoal)
-  cream:        '#09090B',    // Zinc-950 deep pure canvas
-  creamDark:    '#18181B',    // Zinc-900 elevated surface
+  // Mood Tokens
+  moodComfort:     '#F5B042',
+  moodComfortBlob: '#FFD998',
+  moodComfortText: '#2B1A05',
+
+  moodFresh:       '#8FE0A0',
+  moodFreshBlob:   '#BFF0CA',
+  moodFreshText:   '#0F2A10',
+
+  moodFire:        '#EE5F45',
+  moodFireBlob:    '#FF9783',
+  moodFireText:    '#FFFFFF',
+
+  moodSweet:       '#F6BDD3',
+  moodSweetBlob:   '#FDE0EC',
+  moodSweetText:   '#3A0F25',
+
+  // App Canvas Backgrounds
+  cream:        '#121A16',    // bg: #121A16
+  creamDark:    '#1B2620',    // card: #1B2620
+  cardBg:       '#1B2620',    // card: #1B2620
+  cardElevated: '#24332B',
 
   // Accent colors
-  turmeric:     '#FBBF24',    // Warm Amber
+  turmeric:     '#F5B042',
+  brown:        '#121A16',
+  brownMid:     '#1B2620',
+  brownLight:   '#33463C',
 
-  // Header & section tones
-  brown:        '#09090B',
-  brownMid:     '#18181B',
-  brownLight:   '#27272A',
+  // Fresh green
+  green:        '#8FE0A0',
+  greenLight:   '#BFF0CA',
+  greenPale:    '#0F2A10',
 
-  // Fresh green for pure veg & success
-  green:        '#22C55E',    // Bright Emerald
-  greenLight:   '#4ADE80',
-  greenPale:    '#052E16',
+  // Text tokens
+  text:         '#FFFFFF',    // text: #FFFFFF
+  textMuted:    '#A3B5AA',    // muted: #A3B5AA
+  textLight:    '#7D9184',    // deeper muted
 
-  // High-contrast text
-  text:         '#FAFAFA',    // Zinc-50 bright, ultra-crisp
-  textMuted:    '#A1A1AA',    // Zinc-400
-  textLight:    '#71717A',    // Zinc-500
-
-  // Surfaces (Solid, high-contrast cards)
+  // Surfaces & borders
   white:        '#FFFFFF',
-  cardBg:       '#18181B',    // Zinc-900 solid card
-  cardElevated: '#27272A',    // Zinc-800 elevated card
-
-  // Clean borders
-  border:       '#27272A',    // Zinc-800
-  borderLight:  '#3F3F46',    // Zinc-700
+  border:       '#33463C',    // border: #33463C
+  borderLight:  '#283830',
 
   // Status colors
-  error:        '#EF4444',
-  errorPale:    '#450A0A',
-  success:      '#22C55E',
-  successPale:  '#052E16',
+  error:        '#EE5F45',
+  errorPale:    '#3A120B',
+  success:      '#8FE0A0',
+  successPale:  '#0F2A10',
 
   // Overlays
   overlay:      'rgba(0, 0, 0, 0.75)',
 
   // Tab bar
-  tabBarBg:     '#121114',
-  tabBarBorder: '#27272A',
-  tabInactive:  '#71717A',
+  tabBarBg:     '#121A16',
+  tabBarBorder: '#33463C',
+  tabInactive:  '#A3B5AA',
 
   // Status bar
+  statusBarStyle: 'light-content',
+};
+
+export const LIGHT_COLORS = {
+  ...DARK_COLORS,
+  // Craving is a deep culinary aesthetic by design, but we support clean contrast for light preference
   statusBarStyle: 'light-content',
 };
 
@@ -136,33 +148,34 @@ export const SPACING = {
 export const RADIUS = {
   xs: 6,
   sm: 8,
-  md: 12,
-  lg: 16,
-  xl: 20,
-  xxl: 28,
+  md: 16,
+  lg: 26,     // Large cards/tiles: radius 26-32px
+  xl: 28,     // Fully rounded buttons: height 56px, radius 28px
+  xxl: 32,    // Tile Large radius
+  chip: 20,   // Chips radius 20px
   full: 999,
 };
 
 export const SHADOW = {
   small: {
     shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 3,
   },
   medium: {
     shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 6,
   },
   large: {
     shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.18,
-    shadowRadius: 16,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.35,
+    shadowRadius: 20,
+    elevation: 10,
   },
 };
