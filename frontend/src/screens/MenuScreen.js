@@ -250,31 +250,8 @@ export default function MenuScreen({ route, navigation }) {
         navigation={navigation}
       />
 
-      {/* Swiggy/Zomato Floating Bottom Cart Bar */}
-      {itemCount > 0 && (
-        <TouchableOpacity
-          style={styles.floatingCart}
-          onPress={() => navigation.navigate('Cart')}
-          activeOpacity={0.92}
-        >
-          <View style={styles.cartLeft}>
-            <View style={styles.cartBadge}>
-              <Text style={styles.cartBadgeText}>{itemCount}</Text>
-            </View>
-            <View>
-              <Text style={styles.cartItemText}>{itemCount} ITEM{itemCount > 1 ? 'S' : ''}</Text>
-              <Text style={styles.cartPriceText}>₹{itemTotal}</Text>
-            </View>
-          </View>
-          <View style={styles.cartRight}>
-            <Text style={styles.viewCartText}>VIEW CART</Text>
-            <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
-          </View>
-        </TouchableOpacity>
-      )}
-
-      {/* Floating live order tracking capsule if user has active order and cart is empty */}
-      {itemCount === 0 && <ActiveOrderTracker navigation={navigation} />}
+      {/* Dynamic Floating Bottom Bar (Cart & Live Order Tracking) */}
+      <ActiveOrderTracker navigation={navigation} />
     </View>
   );
 }
@@ -323,7 +300,7 @@ const createStyles = (colors, isDark) => StyleSheet.create({
   },
   list: {
     padding: 16,
-    paddingBottom: 90,
+    paddingBottom: 130,
   },
   itemSeparator: {
     height: 1,

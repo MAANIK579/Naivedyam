@@ -1,4 +1,4 @@
-// src/components/ActiveOrderTracker.js — Floating Live Tracking Capsule & Interactive Pop-Up Modal
+// src/components/ActiveOrderTracker.js — Dynamic Unified Bottom Bar (Live Order Tracking + Floating Cart) & Pop-up Modal
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, Modal,
@@ -7,6 +7,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
+import { useCart } from '../context/CartContext';
 import { useTheme } from '../context/ThemeContext';
 import { useSocket } from '../context/SocketContext';
 import { FONTS, RADIUS, SHADOW } from '../theme';
@@ -68,14 +69,21 @@ const STEPS = [
 
 export default function ActiveOrderTracker({ forceOpen = false, onTrackerDismiss, navigation }) {
   const { user } = useAuth();
+  const { cartItems, itemCount, itemTotal } = useCart();
   const { colors, isDark } = useTheme();
   const { socket } = useSocket();
 
   const [activeOrder, setActiveOrder] = useState(null);
   const [modalVisible, setModalVisible] = useState(forceOpen);
   const [cancelling, setCancelling] = useState(false);
-  const [loadingDetails, setLoadingDetails] = useState(false);
   const [fullTracking, setFullTracking] = useState(null);
+  const [now, setNow] = useState(Date.now());
+
+  // Dynamic live countdown tick every 30s
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 30000);
+    return () => clearInterval(timer);
+  }, []);
 
   // Pulse animation for the live dot
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -123,7 +131,6 @@ export default function ActiveOrderTracker({ forceOpen = false, onTrackerDismiss
         const primary = liveOrders[0];
         setActiveOrder(primary);
 
-        // Fetch full tracking details
         try {
           const trackData = await api.trackOrder(primary.display_id || primary._id);
           setFullTracking(trackData);
@@ -171,7 +178,6 @@ export default function ActiveOrderTracker({ forceOpen = false, onTrackerDismiss
           };
         });
 
-        // Also update fullTracking steps
         setFullTracking(prev => {
           if (!prev) return prev;
           return {
@@ -195,14 +201,15 @@ export default function ActiveOrderTracker({ forceOpen = false, onTrackerDismiss
     };
   }, [socket, activeOrder?._id, activeOrder?.display_id, refreshActiveOrder]);
 
-  if (!activeOrder && !modalVisible) {
+  // If nothing to display at all, return null
+  if (!activeOrder && itemCount === 0 && !modalVisible) {
     return null;
   }
 
   const currentStatus = activeOrder?.status || 'placed';
   const cfg = STATUS_CONFIG[currentStatus] || STATUS_CONFIG.placed;
 
-  // Calculate live ETA string and remaining minutes
+  // Calculate live ETA string and remaining minutes dynamically
   let etaText = 'Calculating...';
   let clockTime = '';
 
@@ -210,7 +217,7 @@ export default function ActiveOrderTracker({ forceOpen = false, onTrackerDismiss
   if (estTimeVal) {
     const estDate = new Date(estTimeVal);
     clockTime = estDate.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
-    const diffMs = estDate.getTime() - Date.now();
+    const diffMs = estDate.getTime() - now;
     const remainingMins = Math.max(1, Math.round(diffMs / 60000));
     if (remainingMins > 0 && remainingMins <= 90) {
       etaText = `Arriving in ~${remainingMins} min`;
@@ -222,6 +229,13 @@ export default function ActiveOrderTracker({ forceOpen = false, onTrackerDismiss
   } else {
     etaText = `Arriving in ~${cfg.defaultMin} min`;
   }
+
+  // Preview dishes in cart
+  const itemsPreview = (cartItems || [])
+    .map(ci => ci?.item?.name)
+    .filter(Boolean)
+    .slice(0, 2)
+    .join(', ') + ((cartItems?.length > 2) ? ` +${cartItems.length - 2} more` : '');
 
   // Handle cancellation
   async function handleCancel() {
@@ -258,38 +272,77 @@ export default function ActiveOrderTracker({ forceOpen = false, onTrackerDismiss
 
   return (
     <>
-      {/* ── Docked Floating Capsule at bottom of screen ──────── */}
-      {activeOrder && (
-        <TouchableOpacity
-          style={styles.capsuleContainer}
-          onPress={() => setModalVisible(true)}
-          activeOpacity={0.92}
-        >
-          <View style={styles.capsuleLeft}>
-            <View style={styles.capsuleIconWrap}>
-              <Ionicons name={cfg.icon} size={20} color={colors.saffron} />
-              <Animated.View style={[styles.pulseDot, { opacity: pulseAnim }]} />
-            </View>
-
-            <View style={styles.capsuleTexts}>
-              <View style={styles.capsuleTitleRow}>
-                <Text style={styles.capsuleEtaText}>{etaText}</Text>
-                {clockTime ? <Text style={styles.capsuleClockText}>· {clockTime}</Text> : null}
+      {/* ── Dynamic Floating Bottom Bar (Cart & Live Tracking) ──────── */}
+      <View style={styles.floatingContainer} pointerEvents="box-none">
+        {/* Active Order Tracking Capsule */}
+        {activeOrder && (
+          <TouchableOpacity
+            style={[
+              styles.capsuleContainer,
+              itemCount > 0 && styles.capsuleStacked,
+            ]}
+            onPress={() => setModalVisible(true)}
+            activeOpacity={0.92}
+          >
+            <View style={styles.capsuleLeft}>
+              <View style={styles.capsuleIconWrap}>
+                <Ionicons name={cfg.icon} size={18} color={colors.saffron} />
+                <Animated.View style={[styles.pulseDot, { opacity: pulseAnim }]} />
               </View>
-              <Text style={styles.capsuleSubText} numberOfLines={1}>
-                #{activeOrder.display_id || 'NVD'} · {cfg.sub}
-              </Text>
-            </View>
-          </View>
 
-          <View style={styles.capsuleRight}>
-            <View style={styles.trackActionBtn}>
-              <Text style={styles.trackActionText}>Track</Text>
-              <Ionicons name="chevron-up" size={14} color="#FFFFFF" />
+              <View style={styles.capsuleTexts}>
+                <View style={styles.capsuleTitleRow}>
+                  <Text style={styles.capsuleEtaText}>{etaText}</Text>
+                  {clockTime ? <Text style={styles.capsuleClockText}>· {clockTime}</Text> : null}
+                </View>
+                <Text style={styles.capsuleSubText} numberOfLines={1}>
+                  #{activeOrder.display_id || 'NVD'} · {cfg.sub}
+                </Text>
+              </View>
             </View>
-          </View>
-        </TouchableOpacity>
-      )}
+
+            <View style={styles.capsuleRight}>
+              <View style={styles.trackActionBtn}>
+                <Text style={styles.trackActionText}>Track</Text>
+                <Ionicons name="chevron-up" size={13} color="#FFFFFF" />
+              </View>
+            </View>
+          </TouchableOpacity>
+        )}
+
+        {/* Dynamic Floating Cart Bar */}
+        {itemCount > 0 && (
+          <TouchableOpacity
+            style={styles.cartBarContainer}
+            onPress={() => navigation?.navigate?.('Cart')}
+            activeOpacity={0.92}
+          >
+            <View style={styles.cartLeft}>
+              <View style={styles.cartBadge}>
+                <Ionicons name="cart" size={14} color="#FFFFFF" style={{ marginRight: 3 }} />
+                <Text style={styles.cartBadgeText}>{itemCount}</Text>
+              </View>
+              <View style={styles.cartTexts}>
+                <View style={styles.cartPriceRow}>
+                  <Text style={styles.cartItemCountText}>
+                    {itemCount} ITEM{itemCount > 1 ? 'S' : ''}
+                  </Text>
+                  <Text style={styles.cartDotText}>·</Text>
+                  <Text style={styles.cartPriceText}>₹{itemTotal}</Text>
+                </View>
+                <Text style={styles.cartPreviewText} numberOfLines={1}>
+                  {itemsPreview || 'Dishes added to cart'}
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.cartRight}>
+              <Text style={styles.viewCartActionText}>VIEW CART</Text>
+              <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
+            </View>
+          </TouchableOpacity>
+        )}
+      </View>
 
       {/* ── Live Tracking Pop-Up Sheet / Modal ────────────────── */}
       <Modal
@@ -506,15 +559,101 @@ export default function ActiveOrderTracker({ forceOpen = false, onTrackerDismiss
 }
 
 const createStyles = (colors, isDark) => StyleSheet.create({
-  // ── Floating Capsule ──────────────────────────────────────
-  capsuleContainer: {
+  // ── Unified Floating Container ────────────────────────────
+  floatingContainer: {
     position: 'absolute',
-    bottom: 74, // Floats cleanly just above the 62px bottom tab bar
+    bottom: 74, // Cleanly above the 62px bottom tab bar
     left: 14,
     right: 14,
+    gap: 8,
+    zIndex: 999,
+    elevation: 10,
+  },
+
+  // ── Floating Cart Bar ─────────────────────────────────────
+  cartBarContainer: {
+    backgroundColor: colors.saffron,
+    borderRadius: RADIUS.lg,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    ...SHADOW.large,
+    elevation: 8,
+  },
+  cartLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    marginRight: 10,
+  },
+  cartBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.22)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: RADIUS.full,
+    marginRight: 10,
+  },
+  cartBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 12.5,
+    ...FONTS.heavy,
+  },
+  cartTexts: {
+    flex: 1,
+  },
+  cartPriceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  cartItemCountText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    ...FONTS.bold,
+    letterSpacing: 0.4,
+    opacity: 0.95,
+  },
+  cartDotText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    opacity: 0.7,
+  },
+  cartPriceText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    ...FONTS.heavy,
+  },
+  cartPreviewText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    opacity: 0.85,
+    marginTop: 1,
+  },
+  cartRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.22)',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: RADIUS.md,
+    gap: 6,
+  },
+  viewCartActionText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    ...FONTS.heavy,
+    letterSpacing: 0.5,
+  },
+
+  // ── Floating Tracking Capsule ─────────────────────────────
+  capsuleContainer: {
     backgroundColor: isDark ? '#1C1917' : '#FFFFFF',
     borderRadius: RADIUS.xl,
-    paddingVertical: 12,
+    paddingVertical: 11,
     paddingHorizontal: 16,
     flexDirection: 'row',
     alignItems: 'center',
@@ -523,7 +662,11 @@ const createStyles = (colors, isDark) => StyleSheet.create({
     borderColor: colors.saffron,
     ...SHADOW.large,
     elevation: 8,
-    zIndex: 999,
+  },
+  capsuleStacked: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: isDark ? '#261F1D' : '#FFF7ED',
   },
   capsuleLeft: {
     flexDirection: 'row',
@@ -532,22 +675,22 @@ const createStyles = (colors, isDark) => StyleSheet.create({
     marginRight: 10,
   },
   capsuleIconWrap: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: colors.saffronPale,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
-    marginRight: 12,
+    marginRight: 10,
   },
   pulseDot: {
     position: 'absolute',
-    top: 2,
-    right: 2,
-    width: 9,
-    height: 9,
-    borderRadius: 5,
+    top: 1,
+    right: 1,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
     backgroundColor: '#16A34A',
     borderWidth: 1.5,
     borderColor: '#FFFFFF',
@@ -567,18 +710,18 @@ const createStyles = (colors, isDark) => StyleSheet.create({
     alignItems: 'center',
   },
   capsuleEtaText: {
-    fontSize: 14,
+    fontSize: 13.5,
     ...FONTS.heavy,
     color: colors.saffron,
   },
   capsuleClockText: {
-    fontSize: 12,
+    fontSize: 11.5,
     ...FONTS.medium,
     color: colors.textMuted,
     marginLeft: 4,
   },
   capsuleSubText: {
-    fontSize: 11.5,
+    fontSize: 11,
     color: colors.textMuted,
     marginTop: 1,
   },
@@ -590,14 +733,14 @@ const createStyles = (colors, isDark) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.saffron,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
+    paddingHorizontal: 11,
+    paddingVertical: 6,
     borderRadius: RADIUS.full,
-    gap: 4,
+    gap: 3,
   },
   trackActionText: {
     color: '#FFFFFF',
-    fontSize: 12,
+    fontSize: 11.5,
     ...FONTS.bold,
   },
 

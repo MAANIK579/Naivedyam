@@ -110,13 +110,6 @@ function MainTabs() {
           tabBarLabel: 'Menu',
         }}
       />
-      <Tab.Screen name="Cart" component={CartScreen}
-        options={{
-          title: 'Your Cart',
-          tabBarIcon: ({ focused }) => <TabIcon routeName="Cart" focused={focused} badgeCount={itemCount} colors={colors} />,
-          tabBarLabel: 'Cart',
-        }}
-      />
     </Tab.Navigator>
   );
 }
@@ -143,6 +136,7 @@ function AppStack() {
   return (
     <Stack.Navigator screenOptions={commonHeader}>
       <Stack.Screen name="MainTabs"      component={MainTabs}           options={{ headerShown: false }} />
+      <Stack.Screen name="Cart"          component={CartScreen}         options={{ title: 'Your Cart' }} />
       <Stack.Screen name="Profile"       component={ProfileScreen}      options={{ headerShown: false }} />
       <Stack.Screen name="Track"         component={TrackScreen}        options={{ headerShown: false }} />
       <Stack.Screen name="Search"        component={SearchScreen}       options={{ title: 'Search Dishes' }} />
